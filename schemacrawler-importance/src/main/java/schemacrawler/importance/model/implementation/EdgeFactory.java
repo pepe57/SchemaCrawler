@@ -15,6 +15,7 @@ import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.ForeignKey;
+import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.ReferencingObject;
 import schemacrawler.schema.Routine;
 import schemacrawler.schema.Synonym;
@@ -52,7 +53,7 @@ final class EdgeFactory {
       final DatabaseObject source,
       final DatabaseObject target,
       final EdgeType edgeType,
-      final schemacrawler.schema.NamedObjectKey referenceKey,
+      final NamedObjectKey referenceKey,
       final SchemaGraphAssembly assembly) {
     if (source == null || target == null) {
       LOGGER.warning(() -> "Skipping " + edgeType + " edge with a missing endpoint");

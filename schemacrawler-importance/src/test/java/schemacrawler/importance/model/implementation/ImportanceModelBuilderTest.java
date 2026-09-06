@@ -34,6 +34,7 @@ import schemacrawler.schema.Synonym;
 import schemacrawler.schema.Table;
 import schemacrawler.schema.TableConstraintType;
 import schemacrawler.schema.TableReference;
+import schemacrawler.schema.TableType;
 import schemacrawler.schema.View;
 import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
@@ -100,7 +101,7 @@ class ImportanceModelBuilderTest {
     final Table orders = table("ORDERS");
     final View orderSummary = mock(View.class);
     when(orderSummary.key()).thenReturn(new NamedObjectKey("PUBLIC", "ORDER_SUMMARY"));
-    when(orderSummary.getTableType()).thenReturn(new schemacrawler.schema.TableType("VIEW"));
+    when(orderSummary.getTableType()).thenReturn(new TableType("VIEW"));
     doReturn(List.of(orders)).when(orderSummary).getReferencedObjects();
     final Procedure refreshOrders = mock(Procedure.class);
     initialize(refreshOrders, "REFRESH_ORDERS");
