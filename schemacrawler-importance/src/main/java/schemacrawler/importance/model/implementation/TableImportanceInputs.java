@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Table;
 import schemacrawler.tools.utility.TableCounts;
@@ -31,21 +32,41 @@ final class TableImportanceInputs {
       TableTraits tableTraits, TableCounts tableCounts, TableImportanceMetrics importanceMetrics) {}
 
   private final Map<DatabaseObjectNodeId, TableImportanceInput> inputs = new LinkedHashMap<>();
+  private final Map<DatabaseObjectNodeId, Table> tables = new LinkedHashMap<>();
 
   Iterable<Map.Entry<DatabaseObjectNodeId, TableImportanceInput>> entries() {
     return inputs.entrySet();
   }
 
-  TableImportanceInput get(final DatabaseObjectNodeId nodeId) {
-    return inputs.get(nodeId);
-  }
-
-  void putTableImportance(final Table table, final TableImportanceMetrics importanceMetrics) {
+  void putInputs(final Table table, final TableImportanceMetrics importanceMetrics) {
     requireNonNull(table, "No table provided");
     requireNonNull(importanceMetrics, "No table importance metrics provided");
     final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(table);
     final TableTraits tableTraits = TableImportanceUtility.tableTraitsfrom(table);
     final TableCounts tableCounts = TableImportanceUtility.tableCountsfrom(table);
+
+    tables.put(nodeId, table);
     inputs.put(nodeId, new TableImportanceInput(tableTraits, tableCounts, importanceMetrics));
+  }
+
+  TableImportance store(final DatabaseObjectNodeId nodeId, final Integer importanceScore) {
+    requireNonNull(nodeId, "No node id provided");
+    requireNonNull(importanceScore, "No importance score provided");
+
+    final Table table = tables.get(nodeId);
+    if (table == null) {
+      return null;
+    }
+
+    final TableImportanceInputs.TableImportanceInput tableInputs = inputs.get(nodeId);
+    final TableImportance tableImportance =
+        new TableImportance(
+            importanceScore,
+            tableInputs.importanceMetrics(),
+            tableInputs.tableTraits(),
+            tableInputs.tableCounts());
+    table.setAttribute(TableImportance.class.getName(), tableImportance);
+
+    return tableImportance;
   }
 }

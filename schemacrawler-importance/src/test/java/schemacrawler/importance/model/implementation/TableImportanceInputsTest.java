@@ -26,7 +26,8 @@ class TableImportanceInputsTest {
     final TableImportanceInputs inputs = new TableImportanceInputs();
 
     assertThat(
-        inputs.get(DatabaseObjectNodeIdUtility.create(new LightTable("ORPHAN"))), is(nullValue()));
+        inputs.store(DatabaseObjectNodeIdUtility.create(new LightTable("ORPHAN")), 1),
+        is(nullValue()));
   }
 
   @Test
@@ -36,9 +37,9 @@ class TableImportanceInputsTest {
     final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(table);
     final TableImportanceMetrics metrics = new TableImportanceMetrics(1, 2, 3.0, 4, 5);
 
-    inputs.putTableImportance(table, metrics);
+    inputs.putInputs(table, metrics);
 
-    assertThat(inputs.get(nodeId).importanceMetrics(), is(metrics));
+    assertThat(inputs.store(nodeId, 1).importanceMetrics(), is(metrics));
   }
 
   @Test
@@ -49,9 +50,9 @@ class TableImportanceInputsTest {
     final TableImportanceMetrics firstMetrics = new TableImportanceMetrics(1, 1, 1.0, 1, 1);
     final TableImportanceMetrics secondMetrics = new TableImportanceMetrics(2, 2, 2.0, 2, 2);
 
-    inputs.putTableImportance(table, firstMetrics);
-    inputs.putTableImportance(table, secondMetrics);
+    inputs.putInputs(table, firstMetrics);
+    inputs.putInputs(table, secondMetrics);
 
-    assertThat(inputs.get(nodeId).importanceMetrics(), is(secondMetrics));
+    assertThat(inputs.store(nodeId, 1).importanceMetrics(), is(secondMetrics));
   }
 }

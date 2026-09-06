@@ -135,7 +135,7 @@ class ImportanceScoreCalculatorTest {
       final boolean hasIndexes) {
     doReturn(hasPrimaryKey).when(table).hasPrimaryKey();
     doReturn(hasIndexes).when(table).hasIndexes();
-    inputs.putTableImportance(table, metrics);
+    inputs.putInputs(table, metrics);
   }
 
   private static Table table(final String name) {

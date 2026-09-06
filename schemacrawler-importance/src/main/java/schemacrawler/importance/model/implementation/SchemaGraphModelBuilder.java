@@ -12,10 +12,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
-import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.Routine;
@@ -74,34 +74,19 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
       final DatabaseObjectNodeId nodeId = entry.getKey();
       final Table table = entry.getValue();
-      inputs.putTableImportance(table, topologyMetrics.get(nodeId));
+      inputs.putInputs(table, topologyMetrics.get(nodeId));
     }
 
     final Map<DatabaseObjectNodeId, Integer> importanceScores =
         ImportanceScoreCalculator.calculate(inputs);
+    for (final Entry<DatabaseObjectNodeId, Integer> entry : importanceScores.entrySet()) {
+      inputs.store(entry.getKey(), entry.getValue());
+    }
 
-    storeTableImportance(inputs, importanceScores);
     final List<TableCluster> tableClusters =
         CommunityDetector.detectCommunities(
             assembly.catalogGraph(), assembly.tableNodes(), assembly.tablesByNode());
     return new ImmutableSchemaGraphModel(
         assembly.catalogGraph(), assembly.tableNodes(), assembly.nodeToObject(), tableClusters);
-  }
-
-  private void storeTableImportance(
-      final TableImportanceInputs inputs,
-      final Map<DatabaseObjectNodeId, Integer> importanceScores) {
-    for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
-      final DatabaseObjectNodeId nodeId = entry.getKey();
-      final Table table = entry.getValue();
-      final TableImportanceInputs.TableImportanceInput tableInputs = inputs.get(nodeId);
-      table.setAttribute(
-          TableImportance.class.getName(),
-          new TableImportance(
-              importanceScores.get(nodeId),
-              tableInputs.importanceMetrics(),
-              tableInputs.tableTraits(),
-              tableInputs.tableCounts()));
-    }
   }
 }
