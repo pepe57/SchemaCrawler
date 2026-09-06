@@ -8,7 +8,8 @@
 
 package schemacrawler.importance.model;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
+
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
@@ -16,7 +17,7 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 public record DatabaseObjectNodeId(NamedObjectKey key, SimpleDatabaseObjectType type) {
 
   public DatabaseObjectNodeId {
-    Objects.requireNonNull(key, "No object key provided");
-    Objects.requireNonNull(type, "No object type provided");
+    requireNonNull(key, "No object key provided");
+    requireNonNull(type, "No object type provided");
   }
 }
