@@ -10,6 +10,7 @@ package schemacrawler.importance.model.implementation;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,27 +37,31 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
   private SchemaGraphModelBuilder(final Catalog catalog) {
     requireNonNull(catalog, "No catalog provided");
 
+    final Collection<Table> tables = catalog.getTables();
+    final Collection<Routine> routines = catalog.getRoutines();
+    final Collection<Synonym> synonyms = catalog.getSynonyms();
+
     assembly = new SchemaGraphAssembly();
 
     // First add all nodes (vertices)
-    for (final Table table : catalog.getTables()) {
+    for (final Table table : tables) {
       assembly.addNode(table);
     }
-    for (final Routine routine : catalog.getRoutines()) {
+    for (final Routine routine : routines) {
       assembly.addNode(routine);
     }
-    for (final Synonym synonym : catalog.getSynonyms()) {
+    for (final Synonym synonym : synonyms) {
       assembly.addNode(synonym);
     }
 
     // Next add all edges
-    for (final Table table : catalog.getTables()) {
+    for (final Table table : tables) {
       EdgeFactory.addTableEdges(assembly, table);
     }
-    for (final Routine routine : catalog.getRoutines()) {
+    for (final Routine routine : routines) {
       EdgeFactory.addRoutineEdges(assembly, routine);
     }
-    for (final Synonym synonym : catalog.getSynonyms()) {
+    for (final Synonym synonym : synonyms) {
       EdgeFactory.addSynonymEdges(assembly, synonym);
     }
   }
