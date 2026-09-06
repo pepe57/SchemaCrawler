@@ -29,6 +29,23 @@ import schemacrawler.test.utility.crawl.LightTable;
 
 class ImportanceScoreCalculatorTest {
 
+  private static void put(
+      final TableImportanceInputs inputs,
+      final Table table,
+      final TableImportanceMetrics metrics,
+      final boolean hasPrimaryKey,
+      final boolean hasIndexes) {
+    doReturn(hasPrimaryKey).when(table).hasPrimaryKey();
+    doReturn(hasIndexes).when(table).hasIndexes();
+    inputs.putInputs(table, metrics);
+  }
+
+  private static Table table(final String name) {
+    final LightTable table = new LightTable(name);
+    table.setPrimaryKey(new LightPrimaryKey(table.addColumn("ID")));
+    return spy(table);
+  }
+
   @Test
   void connectedTableOutranksDisconnectedTable() {
     final Table connectedTable = table("AUTHORS");
@@ -44,22 +61,6 @@ class ImportanceScoreCalculatorTest {
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     assertThat(scores.get(connectedNode), greaterThan(scores.get(disconnectedNode)));
-  }
-
-  @Test
-  void wellConnectedTableOutranksPoorlyConnectedTable() {
-    final Table smallTable = table("SMALL_LOOKUP");
-    final DatabaseObjectNodeId smallNode = DatabaseObjectNodeIdUtility.create(smallTable);
-    final Table connectedTable = table("BOOKAUTHORS");
-    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
-
-    final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(inputs, smallTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
-    put(inputs, connectedTable, new TableImportanceMetrics(10, 10, 50.0, 20, 20), false, false);
-
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
-
-    assertThat(scores.get(connectedNode), greaterThan(scores.get(smallNode)));
   }
 
   @Test
@@ -88,17 +89,16 @@ class ImportanceScoreCalculatorTest {
   }
 
   @Test
-  void zeroGraphSignalsProduceAValidScore() {
-    final Table table = table("ONLY_TABLE");
-    final DatabaseObjectNodeId onlyTable = DatabaseObjectNodeIdUtility.create(table);
-
+  void scoreIsAlwaysWithinZeroToOneHundred() {
+    final Table table = table("MAXED_OUT");
+    final DatabaseObjectNodeId maxed = DatabaseObjectNodeIdUtility.create(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(inputs, table, new TableImportanceMetrics(0, 0, 0.0, 0, 0), true, true);
+    put(inputs, table, new TableImportanceMetrics(100, 100, 1000.0, 500, 500), true, true);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
-    assertThat(scores.get(onlyTable), greaterThanOrEqualTo(0));
-    assertThat(scores.get(onlyTable), lessThanOrEqualTo(100));
+    assertThat(scores.get(maxed), greaterThanOrEqualTo(0));
+    assertThat(scores.get(maxed), lessThanOrEqualTo(100));
   }
 
   @Test
@@ -115,32 +115,32 @@ class ImportanceScoreCalculatorTest {
   }
 
   @Test
-  void scoreIsAlwaysWithinZeroToOneHundred() {
-    final Table table = table("MAXED_OUT");
-    final DatabaseObjectNodeId maxed = DatabaseObjectNodeIdUtility.create(table);
+  void wellConnectedTableOutranksPoorlyConnectedTable() {
+    final Table smallTable = table("SMALL_LOOKUP");
+    final DatabaseObjectNodeId smallNode = DatabaseObjectNodeIdUtility.create(smallTable);
+    final Table connectedTable = table("BOOKAUTHORS");
+    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
+
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(inputs, table, new TableImportanceMetrics(100, 100, 1000.0, 500, 500), true, true);
+    put(inputs, smallTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
+    put(inputs, connectedTable, new TableImportanceMetrics(10, 10, 50.0, 20, 20), false, false);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
-    assertThat(scores.get(maxed), greaterThanOrEqualTo(0));
-    assertThat(scores.get(maxed), lessThanOrEqualTo(100));
+    assertThat(scores.get(connectedNode), greaterThan(scores.get(smallNode)));
   }
 
-  private static void put(
-      final TableImportanceInputs inputs,
-      final Table table,
-      final TableImportanceMetrics metrics,
-      final boolean hasPrimaryKey,
-      final boolean hasIndexes) {
-    doReturn(hasPrimaryKey).when(table).hasPrimaryKey();
-    doReturn(hasIndexes).when(table).hasIndexes();
-    inputs.putInputs(table, metrics);
-  }
+  @Test
+  void zeroGraphSignalsProduceAValidScore() {
+    final Table table = table("ONLY_TABLE");
+    final DatabaseObjectNodeId onlyTable = DatabaseObjectNodeIdUtility.create(table);
 
-  private static Table table(final String name) {
-    final LightTable table = new LightTable(name);
-    table.setPrimaryKey(new LightPrimaryKey(table.addColumn("ID")));
-    return spy(table);
+    final TableImportanceInputs inputs = new TableImportanceInputs();
+    put(inputs, table, new TableImportanceMetrics(0, 0, 0.0, 0, 0), true, true);
+
+    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+
+    assertThat(scores.get(onlyTable), greaterThanOrEqualTo(0));
+    assertThat(scores.get(onlyTable), lessThanOrEqualTo(100));
   }
 }

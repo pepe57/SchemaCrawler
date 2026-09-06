@@ -64,6 +64,21 @@ class SchemaGraphModelJavaSerializationTest {
   }
 
   @Test
+  void rejectsNullSerializationInputs() {
+    assertThrows(
+        NullPointerException.class,
+        () -> SerializedSchemaGraphModelUtility.readSchemaGraphModel(null));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            SerializedSchemaGraphModelUtility.saveSchemaGraphModel(
+                null, OutputStream.nullOutputStream()));
+    assertThrows(
+        NullPointerException.class,
+        () -> SerializedSchemaGraphModelUtility.saveSchemaGraphModel(schemaGraphModel, null));
+  }
+
+  @Test
   void schemaGraphModelSerializationWithJava(final DatabaseConnectionSource connectionSource)
       throws Exception {
     final Path testOutputFile = IOUtility.createTempFilePath("sc_schema_graph_model", "ser");
@@ -94,20 +109,5 @@ class SchemaGraphModelJavaSerializationTest {
         deserializedSchemaGraphModel.lookupTableByVertexNodeId(tableNodeId).isPresent(), is(true));
     assertThat(
         deserializedSchemaGraphModel.lookupTableImportance(tableNodeId).isPresent(), is(true));
-  }
-
-  @Test
-  void rejectsNullSerializationInputs() {
-    assertThrows(
-        NullPointerException.class,
-        () -> SerializedSchemaGraphModelUtility.readSchemaGraphModel(null));
-    assertThrows(
-        NullPointerException.class,
-        () ->
-            SerializedSchemaGraphModelUtility.saveSchemaGraphModel(
-                null, OutputStream.nullOutputStream()));
-    assertThrows(
-        NullPointerException.class,
-        () -> SerializedSchemaGraphModelUtility.saveSchemaGraphModel(schemaGraphModel, null));
   }
 }

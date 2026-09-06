@@ -41,44 +41,57 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class ReportServiceTest {
 
-  @Test
-  void returnsFilteredEntriesOrderedByImportanceScoreThenCentralityThenFullName() {
-    final Table alpha = table("ALPHA");
-    final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
-            new DefaultDirectedGraph<>(SchemaEdge.class),
-            Set.of(alphaNode, betaNode),
-            Map.of(alphaNode, alpha, betaNode, beta),
-            List.of());
-
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
-
-    assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
-    assertThat(report.tables().get(0).nodeId(), is(betaNode));
-    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
-    assertThat(report.clusters(), empty());
+  private static ImportanceReportEntry entry(
+      final DatabaseObjectNodeId nodeId, final String tableFullName) {
+    return new ImportanceReportEntry(
+        nodeId,
+        tableFullName,
+        new TableImportance(
+            score(tableFullName), metrics(tableFullName), new TableTraits(), new TableCounts()));
   }
 
-  @Test
-  void fallsBackToCentralityThenFullNameWhenImportanceScoresAreEqual() {
-    final Table alpha = tableWithScore("ALPHA", 5, 0.0);
-    final Table beta = tableWithScore("BETA", 5, 1.0);
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
-            new DefaultDirectedGraph<>(SchemaEdge.class),
-            Set.of(alphaNode, betaNode),
-            Map.of(alphaNode, alpha, betaNode, beta),
-            List.of());
+  private static TableImportanceMetrics metrics(final String name) {
+    return new TableImportanceMetrics(0, 0, "BETA".equals(name) ? 1.0 : 0.0, 0, 0);
+  }
 
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+  private static DatabaseObjectNodeId node(final String name) {
+    return new DatabaseObjectNodeId(new NamedObjectKey(name), SimpleDatabaseObjectType.table);
+  }
 
-    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
-    assertThat(report.tables().get(1).tableFullName(), is("ALPHA"));
+  private static ImportanceOptions options(final String pattern, final int maxImportantTables) {
+    return ImportanceOptionsBuilder.builder()
+        .withTableInclusionRule(new RegularExpressionRule(pattern, ""))
+        .withMaxImportantTables(maxImportantTables)
+        .toOptions();
+  }
+
+  private static SchemaGraphModel schemaGraphModel(
+      final DefaultDirectedGraph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
+      final Set<DatabaseObjectNodeId> tableNodes,
+      final Map<DatabaseObjectNodeId, Table> nodeToObject,
+      final List<TableCluster> tableClusters) {
+    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
+  }
+
+  private static int score(final String name) {
+    return "BETA".equals(name) ? 10 : 5;
+  }
+
+  private static Table table(final String name) {
+    return tableWithScore(name, score(name), "BETA".equals(name) ? 1.0 : 0.0);
+  }
+
+  private static Table tableWithScore(
+      final String name, final int importanceScore, final double betweennessCentrality) {
+    final Table table = new LightTable(name);
+    table.setAttribute(
+        TableImportance.class.getName(),
+        new TableImportance(
+            importanceScore,
+            new TableImportanceMetrics(0, 0, betweennessCentrality, 0, 0),
+            new TableTraits(),
+            new TableCounts()));
+    return table;
   }
 
   @Test
@@ -99,9 +112,9 @@ class ReportServiceTest {
   }
 
   @Test
-  void truncatesEntriesWhenMaxTablesIsPositive() {
-    final Table alpha = table("ALPHA");
-    final Table beta = table("BETA");
+  void fallsBackToCentralityThenFullNameWhenImportanceScoresAreEqual() {
+    final Table alpha = tableWithScore("ALPHA", 5, 0.0);
+    final Table beta = tableWithScore("BETA", 5, 1.0);
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final DatabaseObjectNodeId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
@@ -110,52 +123,11 @@ class ReportServiceTest {
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
-
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", 1));
-
-    assertThat(report.tables().size(), is(1));
-    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
-  }
-
-  @Test
-  void returnsAllEntriesWhenMaxTablesIsZeroOrNegative() {
-    final Table alpha = table("ALPHA");
-    final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
-            new DefaultDirectedGraph<>(SchemaEdge.class),
-            Set.of(alphaNode, betaNode),
-            Map.of(alphaNode, alpha, betaNode, beta),
-            List.of());
-
-    final var reportZero =
-        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
-    assertThat(reportZero.tables().size(), is(2));
-
-    final var reportNegative =
-        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
-    assertThat(reportNegative.tables().size(), is(2));
-  }
-
-  @Test
-  void usesCommunitiesCachedOnTheSchemaGraphModel() {
-    final Table alpha = table("ALPHA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final TableCluster cachedTableCluster =
-        new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
-            new DefaultDirectedGraph<>(SchemaEdge.class),
-            Set.of(alphaNode),
-            Map.of(alphaNode, alpha),
-            List.of(cachedTableCluster));
 
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
-    assertThat(report.clusters(), hasSize(1));
-    assertThat(report.clusters().get(0).id(), is(cachedTableCluster.id()));
+    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
+    assertThat(report.tables().get(1).tableFullName(), is("ALPHA"));
   }
 
   @Test
@@ -186,56 +158,84 @@ class ReportServiceTest {
     assertThat(report.clusters().get(0).id(), is(firstCluster.id()));
   }
 
-  private static ImportanceReportEntry entry(
-      final DatabaseObjectNodeId nodeId, final String tableFullName) {
-    return new ImportanceReportEntry(
-        nodeId,
-        tableFullName,
-        new TableImportance(
-            score(tableFullName), metrics(tableFullName), new TableTraits(), new TableCounts()));
+  @Test
+  void returnsAllEntriesWhenMaxTablesIsZeroOrNegative() {
+    final Table alpha = table("ALPHA");
+    final Table beta = table("BETA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectNodeId betaNode = node("BETA");
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode, betaNode),
+            Map.of(alphaNode, alpha, betaNode, beta),
+            List.of());
+
+    final var reportZero =
+        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+    assertThat(reportZero.tables().size(), is(2));
+
+    final var reportNegative =
+        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+    assertThat(reportNegative.tables().size(), is(2));
   }
 
-  private static SchemaGraphModel schemaGraphModel(
-      final DefaultDirectedGraph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
-      final Set<DatabaseObjectNodeId> tableNodes,
-      final Map<DatabaseObjectNodeId, Table> nodeToObject,
-      final List<TableCluster> tableClusters) {
-    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
+  @Test
+  void returnsFilteredEntriesOrderedByImportanceScoreThenCentralityThenFullName() {
+    final Table alpha = table("ALPHA");
+    final Table beta = table("BETA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectNodeId betaNode = node("BETA");
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode, betaNode),
+            Map.of(alphaNode, alpha, betaNode, beta),
+            List.of());
+
+    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+
+    assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
+    assertThat(report.tables().get(0).nodeId(), is(betaNode));
+    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
+    assertThat(report.clusters(), empty());
   }
 
-  private static ImportanceOptions options(final String pattern, final int maxImportantTables) {
-    return ImportanceOptionsBuilder.builder()
-        .withTableInclusionRule(new RegularExpressionRule(pattern, ""))
-        .withMaxImportantTables(maxImportantTables)
-        .toOptions();
+  @Test
+  void truncatesEntriesWhenMaxTablesIsPositive() {
+    final Table alpha = table("ALPHA");
+    final Table beta = table("BETA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectNodeId betaNode = node("BETA");
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode, betaNode),
+            Map.of(alphaNode, alpha, betaNode, beta),
+            List.of());
+
+    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", 1));
+
+    assertThat(report.tables().size(), is(1));
+    assertThat(report.tables().get(0).tableFullName(), is("BETA"));
   }
 
-  private static Table table(final String name) {
-    return tableWithScore(name, score(name), "BETA".equals(name) ? 1.0 : 0.0);
-  }
+  @Test
+  void usesCommunitiesCachedOnTheSchemaGraphModel() {
+    final Table alpha = table("ALPHA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final TableCluster cachedTableCluster =
+        new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode),
+            Map.of(alphaNode, alpha),
+            List.of(cachedTableCluster));
 
-  private static Table tableWithScore(
-      final String name, final int importanceScore, final double betweennessCentrality) {
-    final Table table = new LightTable(name);
-    table.setAttribute(
-        TableImportance.class.getName(),
-        new TableImportance(
-            importanceScore,
-            new TableImportanceMetrics(0, 0, betweennessCentrality, 0, 0),
-            new TableTraits(),
-            new TableCounts()));
-    return table;
-  }
+    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
-  private static int score(final String name) {
-    return "BETA".equals(name) ? 10 : 5;
-  }
-
-  private static TableImportanceMetrics metrics(final String name) {
-    return new TableImportanceMetrics(0, 0, "BETA".equals(name) ? 1.0 : 0.0, 0, 0);
-  }
-
-  private static DatabaseObjectNodeId node(final String name) {
-    return new DatabaseObjectNodeId(new NamedObjectKey(name), SimpleDatabaseObjectType.table);
+    assertThat(report.clusters(), hasSize(1));
+    assertThat(report.clusters().get(0).id(), is(cachedTableCluster.id()));
   }
 }

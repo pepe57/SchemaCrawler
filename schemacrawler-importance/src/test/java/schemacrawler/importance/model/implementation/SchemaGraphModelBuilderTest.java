@@ -200,6 +200,27 @@ class SchemaGraphModelBuilderTest {
   }
 
   @Test
+  void retainsTypedObjectLookupsForCollidingNames() {
+    final Table table = table("ORDERS");
+    final Procedure procedure = mock(Procedure.class);
+    initialize(procedure, "ORDERS");
+
+    final Catalog catalog = catalog(List.of(table), List.<Routine>of(procedure), List.of());
+    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
+
+    assertThat(
+        schemaGraphModel
+            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(table))
+            .orElseThrow(),
+        is(table));
+    assertThat(
+        schemaGraphModel
+            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(procedure))
+            .orElseThrow(),
+        is(procedure));
+  }
+
+  @Test
   void storesAnImportanceScoreWithinZeroToOneHundredForEveryTable() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
@@ -223,26 +244,5 @@ class SchemaGraphModelBuilderTest {
     assertThat(
         orders.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),
         lessThanOrEqualTo(100));
-  }
-
-  @Test
-  void retainsTypedObjectLookupsForCollidingNames() {
-    final Table table = table("ORDERS");
-    final Procedure procedure = mock(Procedure.class);
-    initialize(procedure, "ORDERS");
-
-    final Catalog catalog = catalog(List.of(table), List.<Routine>of(procedure), List.of());
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
-
-    assertThat(
-        schemaGraphModel
-            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(table))
-            .orElseThrow(),
-        is(table));
-    assertThat(
-        schemaGraphModel
-            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(procedure))
-            .orElseThrow(),
-        is(procedure));
   }
 }

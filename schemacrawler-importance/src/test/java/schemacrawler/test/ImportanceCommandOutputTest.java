@@ -85,7 +85,7 @@ class ImportanceCommandOutputTest {
     executable.setSchemaCrawlerOptions(withLimitOptions);
     executable.setAdditionalConfiguration(config);
 
-    ImportanceReportOutputFormat outputFormat = ImportanceReportOutputFormat.yaml;
+    final ImportanceReportOutputFormat outputFormat = ImportanceReportOutputFormat.yaml;
     final String referenceFile = "importance_report_all.%s".formatted(outputFormat.getFormat());
     assertThat(
         outputOf(executableExecution(connectionSource, executable, outputFormat)),

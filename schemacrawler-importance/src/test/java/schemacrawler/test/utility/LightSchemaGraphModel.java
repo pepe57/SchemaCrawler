@@ -24,6 +24,8 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 public final class LightSchemaGraphModel implements SchemaGraphModel {
 
+  private static final long serialVersionUID = -7403567390131889799L;
+
   private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
   private final List<TableCluster> tableClusters;
   private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;

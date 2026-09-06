@@ -44,16 +44,6 @@ class CommunityDetectionServiceTest {
   }
 
   @Test
-  void returnsEmptyListForEmptyCatalog() {
-    final Catalog catalog = catalog(List.of());
-    final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
-    final List<TableCluster> tableClusters = graphModel.getTableClusters();
-
-    assertThat(tableClusters, hasSize(0));
-    assertThat(graphModel.getTableClusters(), hasSize(0));
-  }
-
-  @Test
   void detectsAndAnchorsCommunitiesForConnectedTables() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
@@ -80,5 +70,15 @@ class CommunityDetectionServiceTest {
       assertThat(tableCluster.memberNodes().contains(tableCluster.anchorNode()), is(true));
     }
     assertThat(graphModel.getTableClusters(), is(tableClusters));
+  }
+
+  @Test
+  void returnsEmptyListForEmptyCatalog() {
+    final Catalog catalog = catalog(List.of());
+    final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final List<TableCluster> tableClusters = graphModel.getTableClusters();
+
+    assertThat(tableClusters, hasSize(0));
+    assertThat(graphModel.getTableClusters(), hasSize(0));
   }
 }

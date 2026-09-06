@@ -16,6 +16,11 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class GraphMetricsCalculatorTest {
 
+  private static DatabaseObjectNodeId node(final String name) {
+    return new DatabaseObjectNodeId(
+        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
+  }
+
   @Test
   void calculatesCompleteSchemaGraphMetricsIncludingUndirectedBridgeCentrality() {
     final DatabaseObjectNodeId orders = node("ORDERS");
@@ -48,10 +53,5 @@ class GraphMetricsCalculatorTest {
     assertThat(
         ordersMetrics.betweennessCentrality(),
         greaterThan(countriesMetrics.betweennessCentrality()));
-  }
-
-  private static DatabaseObjectNodeId node(final String name) {
-    return new DatabaseObjectNodeId(
-        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
   }
 }

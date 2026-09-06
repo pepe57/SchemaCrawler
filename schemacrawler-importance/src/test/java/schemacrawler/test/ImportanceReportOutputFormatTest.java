@@ -22,11 +22,28 @@ import schemacrawler.importance.options.ImportanceReportOutputFormat;
 class ImportanceReportOutputFormatTest {
 
   @Test
-  void supportsTextJsonAndYamlFormats() {
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat("text"), is(true));
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat("txt"), is(true));
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat("json"), is(true));
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat("yaml"), is(true));
+  void exposesFormatMetadata() {
+    for (final ImportanceReportOutputFormat format : ImportanceReportOutputFormat.values()) {
+      assertThat(format.getDescription(), is(not(blankOrNullString())));
+      assertThat(format.getFormat(), is(not(blankOrNullString())));
+      assertThat(format.getFormats(), is(not(empty())));
+      assertThat(format.toString(), is(not(blankOrNullString())));
+    }
+  }
+
+  @Test
+  void providesAllOutputFormats() {
+    assertThat(ImportanceReportOutputFormat.values(), is(notNullValue()));
+  }
+
+  @Test
+  void rejectsUnsupportedFormats() {
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat(null), is(false));
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat("xml"), is(false));
+    assertThrows(
+        IllegalArgumentException.class, () -> ImportanceReportOutputFormat.fromFormat("xml"));
+    assertThrows(
+        IllegalArgumentException.class, () -> ImportanceReportOutputFormat.fromFormat(null));
   }
 
   @Test
@@ -42,27 +59,10 @@ class ImportanceReportOutputFormatTest {
   }
 
   @Test
-  void exposesFormatMetadata() {
-    for (final ImportanceReportOutputFormat format : ImportanceReportOutputFormat.values()) {
-      assertThat(format.getDescription(), is(not(blankOrNullString())));
-      assertThat(format.getFormat(), is(not(blankOrNullString())));
-      assertThat(format.getFormats(), is(not(empty())));
-      assertThat(format.toString(), is(not(blankOrNullString())));
-    }
-  }
-
-  @Test
-  void rejectsUnsupportedFormats() {
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat(null), is(false));
-    assertThat(ImportanceReportOutputFormat.isSupportedFormat("xml"), is(false));
-    assertThrows(
-        IllegalArgumentException.class, () -> ImportanceReportOutputFormat.fromFormat("xml"));
-    assertThrows(
-        IllegalArgumentException.class, () -> ImportanceReportOutputFormat.fromFormat(null));
-  }
-
-  @Test
-  void providesAllOutputFormats() {
-    assertThat(ImportanceReportOutputFormat.values(), is(notNullValue()));
+  void supportsTextJsonAndYamlFormats() {
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat("text"), is(true));
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat("txt"), is(true));
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat("json"), is(true));
+    assertThat(ImportanceReportOutputFormat.isSupportedFormat("yaml"), is(true));
   }
 }

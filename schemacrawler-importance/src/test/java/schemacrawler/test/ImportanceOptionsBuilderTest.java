@@ -22,6 +22,30 @@ import schemacrawler.tools.options.ConfigUtility;
 class ImportanceOptionsBuilderTest {
 
   @Test
+  void acceptsNullConfigurationAndOptions() {
+    final ImportanceOptionsBuilder builder = ImportanceOptionsBuilder.builder();
+
+    assertThat(builder.fromConfig(null), is(builder));
+    assertThat(builder.fromOptions(null), is(builder));
+  }
+
+  @Test
+  void copiesOptions() {
+    final ImportanceOptions original =
+        ImportanceOptionsBuilder.builder().withTableNamePattern(".*\\.BOOK$").toOptions();
+
+    final ImportanceOptions copy =
+        ImportanceOptionsBuilder.builder().fromOptions(original).toOptions();
+
+    assertThat(copy.getTableInclusionRule(), is(original.getTableInclusionRule()));
+  }
+
+  @Test
+  void createsABuilder() {
+    assertThat(ImportanceOptionsBuilder.builder(), is(notNullValue()));
+  }
+
+  @Test
   void defaultsToIncludingAllTables() {
     final ImportanceOptions options = ImportanceOptionsBuilder.builder().toOptions();
 
@@ -53,11 +77,16 @@ class ImportanceOptionsBuilderTest {
   }
 
   @Test
-  void acceptsNullConfigurationAndOptions() {
-    final ImportanceOptionsBuilder builder = ImportanceOptionsBuilder.builder();
+  void prefersBareCommandLineTableFilter() {
+    final Config config = ConfigUtility.newConfig();
+    config.put("schemacrawler.importance.table-filter", ".*\\.AUTHOR$");
+    config.put("table-filter", ".*\\.BOOK$");
 
-    assertThat(builder.fromConfig(null), is(builder));
-    assertThat(builder.fromOptions(null), is(builder));
+    final ImportanceOptions options =
+        ImportanceOptionsBuilder.builder().fromConfig(config).toOptions();
+
+    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
+    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.AUTHOR"), is(false));
   }
 
   @Test
@@ -85,16 +114,11 @@ class ImportanceOptionsBuilderTest {
   }
 
   @Test
-  void prefersBareCommandLineTableFilter() {
-    final Config config = ConfigUtility.newConfig();
-    config.put("schemacrawler.importance.table-filter", ".*\\.AUTHOR$");
-    config.put("table-filter", ".*\\.BOOK$");
-
+  void replacesANullInclusionRuleWithIncludeAll() {
     final ImportanceOptions options =
-        ImportanceOptionsBuilder.builder().fromConfig(config).toOptions();
+        ImportanceOptionsBuilder.builder().withTableInclusionRule(null).toOptions();
 
     assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
-    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.AUTHOR"), is(false));
   }
 
   @Test
@@ -113,17 +137,6 @@ class ImportanceOptionsBuilderTest {
   }
 
   @Test
-  void copiesOptions() {
-    final ImportanceOptions original =
-        ImportanceOptionsBuilder.builder().withTableNamePattern(".*\\.BOOK$").toOptions();
-
-    final ImportanceOptions copy =
-        ImportanceOptionsBuilder.builder().fromOptions(original).toOptions();
-
-    assertThat(copy.getTableInclusionRule(), is(original.getTableInclusionRule()));
-  }
-
-  @Test
   void usesTheSuppliedInclusionRule() {
     final InclusionRule rule = tableName -> tableName.startsWith("PUBLIC.AUTHOR");
 
@@ -131,18 +144,5 @@ class ImportanceOptionsBuilderTest {
         ImportanceOptionsBuilder.builder().withTableInclusionRule(rule).toOptions();
 
     assertThat(options.getTableInclusionRule(), is(rule));
-  }
-
-  @Test
-  void replacesANullInclusionRuleWithIncludeAll() {
-    final ImportanceOptions options =
-        ImportanceOptionsBuilder.builder().withTableInclusionRule(null).toOptions();
-
-    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
-  }
-
-  @Test
-  void createsABuilder() {
-    assertThat(ImportanceOptionsBuilder.builder(), is(notNullValue()));
   }
 }

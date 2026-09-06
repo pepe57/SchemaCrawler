@@ -26,69 +26,32 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class PathServiceTest {
 
-  @Test
-  void prefersAnAvailableForeignKeyPath() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId countries = table("COUNTRIES");
-    final PathService pathService =
-        pathService(
-            List.of(orders, customers, countries),
-            edge(orders, customers, EdgeType.FOREIGN_KEY),
-            edge(customers, countries, EdgeType.FOREIGN_KEY),
-            edge(orders, countries, EdgeType.IMPLICIT_ASSOCIATION));
+  private record Edge(DatabaseObjectNodeId source, DatabaseObjectNodeId target, SchemaEdge edge) {}
 
-    final PathResult result = pathService.findShortestPath(orders, countries);
-
-    assertThat(result.path(), contains(orders, customers, countries));
-    assertThat(result.usesImpliedAssociations(), is(false));
+  private static Edge edge(
+      final DatabaseObjectNodeId source,
+      final DatabaseObjectNodeId target,
+      final EdgeType edgeType) {
+    return new Edge(source, target, new SchemaEdge(edgeType, new NamedObjectKey(edgeType.name())));
   }
 
-  @Test
-  void fallsBackToImplicitAssociations() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final PathService pathService =
-        pathService(
-            List.of(orders, customers), edge(orders, customers, EdgeType.IMPLICIT_ASSOCIATION));
-
-    final PathResult result = pathService.findShortestPath(orders, customers);
-
-    assertThat(result.path(), contains(orders, customers));
-    assertThat(result.usesImpliedAssociations(), is(true));
+  private static PathService pathService(
+      final List<DatabaseObjectNodeId> nodes, final Edge... graphEdges) {
+    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+        new DirectedPseudograph<>(SchemaEdge.class);
+    nodes.forEach(graph::addVertex);
+    for (final Edge edge : graphEdges) {
+      graph.addEdge(edge.source(), edge.target(), edge.edge());
+    }
+    final Set<DatabaseObjectNodeId> tableNodes = Set.copyOf(nodes);
+    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+        nodes.stream().collect(toMap(identity(), node -> new LightTable(node.key().toString())));
+    return new PathService(new LightSchemaGraphModel(graph, tableNodes, nodeToTable, List.of()));
   }
 
-  @Test
-  void handlesNoPathSameNodeAndUnsupportedNodes() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId procedure =
-        new DatabaseObjectNodeId(
-            new NamedObjectKey("PUBLIC", "REFRESH_ORDERS"), SimpleDatabaseObjectType.procedure);
-    final PathService pathService = pathService(List.of(orders, customers));
-
-    assertThat(pathService.findShortestPath(orders, customers).path(), empty());
-    assertThat(pathService.findShortestPath(orders, orders).path(), contains(orders));
-    assertThrows(
-        IllegalArgumentException.class, () -> pathService.findShortestPath(procedure, customers));
-  }
-
-  @Test
-  void returnsThePathWithFewestEdges() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId countries = table("COUNTRIES");
-    final DatabaseObjectNodeId regions = table("REGIONS");
-    final PathService pathService =
-        pathService(
-            List.of(orders, customers, countries, regions),
-            edge(orders, customers, EdgeType.FOREIGN_KEY),
-            edge(customers, countries, EdgeType.FOREIGN_KEY),
-            edge(orders, regions, EdgeType.FOREIGN_KEY),
-            edge(regions, countries, EdgeType.FOREIGN_KEY),
-            edge(orders, countries, EdgeType.FOREIGN_KEY));
-
-    assertThat(pathService.findShortestPath(orders, countries).path(), contains(orders, countries));
+  private static DatabaseObjectNodeId table(final String name) {
+    return new DatabaseObjectNodeId(
+        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
   }
 
   @Test
@@ -113,29 +76,6 @@ class PathServiceTest {
     assertThat(
         pathService.findShortestPath(table1, table7, -1).path(),
         contains(table1, table2, table3, table4, table5, table6, table7));
-  }
-
-  @Test
-  void cachesTablePathTopology() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
-        new DirectedPseudograph<>(SchemaEdge.class);
-    graph.addVertex(orders);
-    graph.addVertex(customers);
-    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
-        Map.of(
-            orders,
-            new LightTable(orders.key().toString()),
-            customers,
-            new LightTable(customers.key().toString()));
-    final PathService pathService =
-        new PathService(
-            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
-
-    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
-
-    assertThat(pathService.findShortestPath(orders, customers).path(), empty());
   }
 
   @Test
@@ -170,31 +110,91 @@ class PathServiceTest {
         IllegalArgumentException.class, () -> pathService.findShortestPath(procedure, customers));
   }
 
-  private static Edge edge(
-      final DatabaseObjectNodeId source,
-      final DatabaseObjectNodeId target,
-      final EdgeType edgeType) {
-    return new Edge(source, target, new SchemaEdge(edgeType, new NamedObjectKey(edgeType.name())));
-  }
-
-  private static PathService pathService(
-      final List<DatabaseObjectNodeId> nodes, final Edge... graphEdges) {
+  @Test
+  void cachesTablePathTopology() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
     final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
-    nodes.forEach(graph::addVertex);
-    for (final Edge edge : graphEdges) {
-      graph.addEdge(edge.source(), edge.target(), edge.edge());
-    }
-    final Set<DatabaseObjectNodeId> tableNodes = Set.copyOf(nodes);
+    graph.addVertex(orders);
+    graph.addVertex(customers);
     final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
-        nodes.stream().collect(toMap(identity(), node -> new LightTable(node.key().toString())));
-    return new PathService(new LightSchemaGraphModel(graph, tableNodes, nodeToTable, List.of()));
+        Map.of(
+            orders,
+            new LightTable(orders.key().toString()),
+            customers,
+            new LightTable(customers.key().toString()));
+    final PathService pathService =
+        new PathService(
+            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
+
+    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
+
+    assertThat(pathService.findShortestPath(orders, customers).path(), empty());
   }
 
-  private static DatabaseObjectNodeId table(final String name) {
-    return new DatabaseObjectNodeId(
-        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
+  @Test
+  void fallsBackToImplicitAssociations() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final PathService pathService =
+        pathService(
+            List.of(orders, customers), edge(orders, customers, EdgeType.IMPLICIT_ASSOCIATION));
+
+    final PathResult result = pathService.findShortestPath(orders, customers);
+
+    assertThat(result.path(), contains(orders, customers));
+    assertThat(result.usesImpliedAssociations(), is(true));
   }
 
-  private record Edge(DatabaseObjectNodeId source, DatabaseObjectNodeId target, SchemaEdge edge) {}
+  @Test
+  void handlesNoPathSameNodeAndUnsupportedNodes() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final DatabaseObjectNodeId procedure =
+        new DatabaseObjectNodeId(
+            new NamedObjectKey("PUBLIC", "REFRESH_ORDERS"), SimpleDatabaseObjectType.procedure);
+    final PathService pathService = pathService(List.of(orders, customers));
+
+    assertThat(pathService.findShortestPath(orders, customers).path(), empty());
+    assertThat(pathService.findShortestPath(orders, orders).path(), contains(orders));
+    assertThrows(
+        IllegalArgumentException.class, () -> pathService.findShortestPath(procedure, customers));
+  }
+
+  @Test
+  void prefersAnAvailableForeignKeyPath() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final DatabaseObjectNodeId countries = table("COUNTRIES");
+    final PathService pathService =
+        pathService(
+            List.of(orders, customers, countries),
+            edge(orders, customers, EdgeType.FOREIGN_KEY),
+            edge(customers, countries, EdgeType.FOREIGN_KEY),
+            edge(orders, countries, EdgeType.IMPLICIT_ASSOCIATION));
+
+    final PathResult result = pathService.findShortestPath(orders, countries);
+
+    assertThat(result.path(), contains(orders, customers, countries));
+    assertThat(result.usesImpliedAssociations(), is(false));
+  }
+
+  @Test
+  void returnsThePathWithFewestEdges() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final DatabaseObjectNodeId countries = table("COUNTRIES");
+    final DatabaseObjectNodeId regions = table("REGIONS");
+    final PathService pathService =
+        pathService(
+            List.of(orders, customers, countries, regions),
+            edge(orders, customers, EdgeType.FOREIGN_KEY),
+            edge(customers, countries, EdgeType.FOREIGN_KEY),
+            edge(orders, regions, EdgeType.FOREIGN_KEY),
+            edge(regions, countries, EdgeType.FOREIGN_KEY),
+            edge(orders, countries, EdgeType.FOREIGN_KEY));
+
+    assertThat(pathService.findShortestPath(orders, countries).path(), contains(orders, countries));
+  }
 }
