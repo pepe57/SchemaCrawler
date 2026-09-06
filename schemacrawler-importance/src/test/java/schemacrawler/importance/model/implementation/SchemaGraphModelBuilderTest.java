@@ -19,8 +19,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
@@ -54,7 +54,7 @@ class SchemaGraphModelBuilderTest {
   }
 
   private static int edgesOfType(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> graph, final EdgeType edgeType) {
+      final Graph<DatabaseObjectVertexId, SchemaEdge> graph, final EdgeType edgeType) {
     return (int) graph.edgeSet().stream().filter(edge -> edge.getEdgeType() == edgeType).count();
   }
 
@@ -85,7 +85,7 @@ class SchemaGraphModelBuilderTest {
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
     assertThat(schemaGraphModel.getCatalogGraph().vertexSet(), hasSize(1));
-    assertThat(schemaGraphModel.getTableNodes(), hasSize(1));
+    assertThat(schemaGraphModel.getTableVertexIds(), hasSize(1));
     assertThat(
         customers
             .<TableImportance>getAttribute(TableImportance.class.getName())
@@ -128,7 +128,8 @@ class SchemaGraphModelBuilderTest {
             List.of(customerAlias));
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
-    final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();
+    final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph =
+        schemaGraphModel.getCatalogGraph();
     assertThat(catalogGraph.vertexSet(), hasSize(5));
     assertThat(catalogGraph.edgeSet(), hasSize(5));
     assertThat(edgesOfType(catalogGraph, EdgeType.FOREIGN_KEY), is(1));
@@ -162,12 +163,13 @@ class SchemaGraphModelBuilderTest {
             .findFirst()
             .orElseThrow();
     assertThat(
-        catalogGraph.getEdgeSource(foreignKeyEdge), is(DatabaseObjectNodeIdUtility.create(orders)));
+        catalogGraph.getEdgeSource(foreignKeyEdge),
+        is(DatabaseObjectVertexIdUtility.create(orders)));
     assertThat(
         catalogGraph.getEdgeTarget(foreignKeyEdge),
-        is(DatabaseObjectNodeIdUtility.create(customers)));
+        is(DatabaseObjectVertexIdUtility.create(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
-    assertThat(schemaGraphModel.getTableNodes(), hasSize(3));
+    assertThat(schemaGraphModel.getTableVertexIds(), hasSize(3));
     assertThat(schemaGraphModel.getTableClusters(), hasSize(1));
     assertThat(
         orders
@@ -193,9 +195,9 @@ class SchemaGraphModelBuilderTest {
         UnsupportedOperationException.class,
         () ->
             catalogGraph.addVertex(
-                new DatabaseObjectNodeId(
+                new DatabaseObjectVertexId(
                     new NamedObjectKey("OTHER"), SimpleDatabaseObjectType.table)));
-    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableNodes()::clear);
+    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableVertexIds()::clear);
     assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableClusters()::clear);
   }
 
@@ -210,12 +212,12 @@ class SchemaGraphModelBuilderTest {
 
     assertThat(
         schemaGraphModel
-            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(table))
+            .lookupByVertexId(DatabaseObjectVertexIdUtility.create(table))
             .orElseThrow(),
         is(table));
     assertThat(
         schemaGraphModel
-            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(procedure))
+            .lookupByVertexId(DatabaseObjectVertexIdUtility.create(procedure))
             .orElseThrow(),
         is(procedure));
   }

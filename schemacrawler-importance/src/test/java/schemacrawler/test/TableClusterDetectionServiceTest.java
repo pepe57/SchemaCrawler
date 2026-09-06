@@ -66,8 +66,8 @@ class TableClusterDetectionServiceTest {
     assertThat(tableClusters.size(), greaterThan(0));
     for (final TableCluster tableCluster : tableClusters) {
       assertThat(tableCluster.id(), notNullValue());
-      assertThat(tableCluster.anchorNode(), notNullValue());
-      assertThat(tableCluster.memberNodes().contains(tableCluster.anchorNode()), is(true));
+      assertThat(tableCluster.anchorVertexId(), notNullValue());
+      assertThat(tableCluster.memberVertexIds().contains(tableCluster.anchorVertexId()), is(true));
     }
     assertThat(graphModel.getTableClusters(), is(tableClusters));
   }

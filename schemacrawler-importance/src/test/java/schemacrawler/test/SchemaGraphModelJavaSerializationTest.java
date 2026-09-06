@@ -32,8 +32,8 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.importance.utility.SerializedSchemaGraphModelUtility;
@@ -99,15 +99,15 @@ class SchemaGraphModelJavaSerializationTest {
         deserializedSchemaGraphModel.getCatalogGraph().edgeSet(),
         hasSize(schemaGraphModel.getCatalogGraph().edgeSet().size()));
     assertThat(
-        deserializedSchemaGraphModel.getTableNodes(),
-        hasSize(schemaGraphModel.getTableNodes().size()));
+        deserializedSchemaGraphModel.getTableVertexIds(),
+        hasSize(schemaGraphModel.getTableVertexIds().size()));
     assertThat(deserializedSchemaGraphModel.getTableClusters(), hasSize(greaterThan(0)));
 
     final Table table = catalog.getTables().stream().findFirst().orElseThrow();
-    final DatabaseObjectNodeId tableNodeId = DatabaseObjectNodeIdUtility.create(table);
+    final DatabaseObjectVertexId tableVertexId = DatabaseObjectVertexIdUtility.create(table);
     assertThat(
-        deserializedSchemaGraphModel.lookupTableByVertexNodeId(tableNodeId).isPresent(), is(true));
+        deserializedSchemaGraphModel.lookupTableByVertexId(tableVertexId).isPresent(), is(true));
     assertThat(
-        deserializedSchemaGraphModel.lookupTableImportance(tableNodeId).isPresent(), is(true));
+        deserializedSchemaGraphModel.lookupTableImportance(tableVertexId).isPresent(), is(true));
   }
 }

@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
@@ -42,9 +42,9 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 class ReportServiceTest {
 
   private static ImportanceReportEntry entry(
-      final DatabaseObjectNodeId nodeId, final String tableFullName) {
+      final DatabaseObjectVertexId vertexId, final String tableFullName) {
     return new ImportanceReportEntry(
-        nodeId,
+        vertexId,
         tableFullName,
         new TableImportance(
             score(tableFullName), metrics(tableFullName), new TableTraits(), new TableCounts()));
@@ -54,8 +54,8 @@ class ReportServiceTest {
     return new TableImportanceMetrics(0, 0, "BETA".equals(name) ? 1.0 : 0.0, 0, 0);
   }
 
-  private static DatabaseObjectNodeId node(final String name) {
-    return new DatabaseObjectNodeId(new NamedObjectKey(name), SimpleDatabaseObjectType.table);
+  private static DatabaseObjectVertexId node(final String name) {
+    return new DatabaseObjectVertexId(new NamedObjectKey(name), SimpleDatabaseObjectType.table);
   }
 
   private static ImportanceOptions options(final String pattern, final int maxImportantTables) {
@@ -66,11 +66,12 @@ class ReportServiceTest {
   }
 
   private static SchemaGraphModel schemaGraphModel(
-      final DefaultDirectedGraph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
-      final Set<DatabaseObjectNodeId> tableNodes,
-      final Map<DatabaseObjectNodeId, Table> nodeToObject,
+      final DefaultDirectedGraph<DatabaseObjectVertexId, SchemaEdge> catalogGraph,
+      final Set<DatabaseObjectVertexId> tableVertexIds,
+      final Map<DatabaseObjectVertexId, Table> objectsByVertexId,
       final List<TableCluster> tableClusters) {
-    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
+    return new LightSchemaGraphModel(
+        catalogGraph, tableVertexIds, objectsByVertexId, tableClusters);
   }
 
   private static int score(final String name) {
@@ -97,7 +98,7 @@ class ReportServiceTest {
   @Test
   void appliesTheSuppliedInclusionRule() {
     final Table alpha = table("ALPHA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -115,8 +116,8 @@ class ReportServiceTest {
   void fallsBackToCentralityThenFullNameWhenImportanceScoresAreEqual() {
     final Table alpha = tableWithScore("ALPHA", 5, 0.0);
     final Table beta = tableWithScore("BETA", 5, 1.0);
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -134,8 +135,8 @@ class ReportServiceTest {
   void limitsTooManyTableClusters() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final TableCluster firstCluster =
         new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
     final TableCluster secondCluster =
@@ -162,8 +163,8 @@ class ReportServiceTest {
   void returnsAllEntriesWhenMaxTablesIsNegative() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -180,8 +181,8 @@ class ReportServiceTest {
   void returnsFilteredEntriesOrderedByImportanceScoreThenCentralityThenFullName() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -192,7 +193,7 @@ class ReportServiceTest {
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
     assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
-    assertThat(report.tables().get(0).nodeId(), is(betaNode));
+    assertThat(report.tables().get(0).vertexId(), is(betaNode));
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
     assertThat(report.clusters(), empty());
   }
@@ -201,8 +202,8 @@ class ReportServiceTest {
   void returnsNoEntriesWhenMaxTablesIsZero() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -218,8 +219,8 @@ class ReportServiceTest {
   void truncatesEntriesWhenMaxTablesIsPositive() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final DatabaseObjectNodeId betaNode = node("BETA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
@@ -236,7 +237,7 @@ class ReportServiceTest {
   @Test
   void usesClustersCachedOnTheSchemaGraphModel() {
     final Table alpha = table("ALPHA");
-    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final TableCluster cachedTableCluster =
         new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
     final SchemaGraphModel schemaGraphModel =

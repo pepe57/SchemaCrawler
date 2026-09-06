@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Procedure;
 import schemacrawler.schema.Synonym;
@@ -14,7 +14,7 @@ import schemacrawler.schema.TableType;
 import schemacrawler.schema.View;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
-class NodeIdFactoryTest {
+class VertexIdFactoryTest {
 
   @Test
   void identifiesSupportedCatalogObjectTypes() {
@@ -26,11 +26,12 @@ class NodeIdFactoryTest {
     final Synonym synonym = mock(Synonym.class);
     when(synonym.key()).thenReturn(new NamedObjectKey("PUBLIC", "CUSTOMERS_ALIAS"));
 
-    assertThat(DatabaseObjectNodeIdUtility.create(view).type(), is(SimpleDatabaseObjectType.view));
     assertThat(
-        DatabaseObjectNodeIdUtility.create(procedure).type(),
+        DatabaseObjectVertexIdUtility.create(view).type(), is(SimpleDatabaseObjectType.view));
+    assertThat(
+        DatabaseObjectVertexIdUtility.create(procedure).type(),
         is(SimpleDatabaseObjectType.procedure));
     assertThat(
-        DatabaseObjectNodeIdUtility.create(synonym).type(), is(SimpleDatabaseObjectType.synonym));
+        DatabaseObjectVertexIdUtility.create(synonym).type(), is(SimpleDatabaseObjectType.synonym));
   }
 }

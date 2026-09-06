@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 
 import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.schema.NamedObjectKey;
@@ -45,7 +45,7 @@ class SchemaGraphAssemblyTest {
     assembly.addEdge(orders, customers, impliedAssociation);
     assembly.addEdge(refreshOrders, orders, routineDependency);
 
-    final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph = assembly.tableSubgraph();
+    final Graph<DatabaseObjectVertexId, SchemaEdge> tableSubgraph = assembly.tableSubgraph();
 
     assertThat(tableSubgraph.vertexSet(), hasSize(2));
     assertThat(tableSubgraph.edgeSet(), containsInAnyOrder(foreignKey, impliedAssociation));

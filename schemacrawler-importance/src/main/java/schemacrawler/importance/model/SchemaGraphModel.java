@@ -19,16 +19,16 @@ import schemacrawler.schema.Table;
 /** Immutable graph and object lookup data built from a SchemaCrawler catalog. */
 public interface SchemaGraphModel extends Serializable {
 
-  Graph<DatabaseObjectNodeId, SchemaEdge> getCatalogGraph();
+  Graph<DatabaseObjectVertexId, SchemaEdge> getCatalogGraph();
 
   /** Gets the immutable, ordered table clusters calculated when this model was built. */
   List<TableCluster> getTableClusters();
 
-  Set<DatabaseObjectNodeId> getTableNodes();
+  Set<DatabaseObjectVertexId> getTableVertexIds();
 
-  Optional<DatabaseObject> lookupByVertexNodeId(DatabaseObjectNodeId vertexNodeId);
+  Optional<DatabaseObject> lookupByVertexId(DatabaseObjectVertexId vertexId);
 
-  Optional<Table> lookupTableByVertexNodeId(DatabaseObjectNodeId tableNodeId);
+  Optional<Table> lookupTableByVertexId(DatabaseObjectVertexId tableVertexId);
 
-  Optional<TableImportance> lookupTableImportance(DatabaseObjectNodeId tableNodeId);
+  Optional<TableImportance> lookupTableImportance(DatabaseObjectVertexId tableVertexId);
 }

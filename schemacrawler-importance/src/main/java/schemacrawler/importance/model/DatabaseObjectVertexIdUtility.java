@@ -15,15 +15,15 @@ import us.fatehi.utility.UtilityMarker;
 
 /** Creates stable graph identifiers for SchemaCrawler database objects. */
 @UtilityMarker
-public final class DatabaseObjectNodeIdUtility {
+public final class DatabaseObjectVertexIdUtility {
 
-  public static DatabaseObjectNodeId create(final DatabaseObject databaseObject) {
+  public static DatabaseObjectVertexId create(final DatabaseObject databaseObject) {
     Objects.requireNonNull(databaseObject, "No database object provided");
-    return new DatabaseObjectNodeId(
+    return new DatabaseObjectVertexId(
         databaseObject.key(), MetaDataUtility.getSimpleTypeName(databaseObject));
   }
 
-  private DatabaseObjectNodeIdUtility() {
+  private DatabaseObjectVertexIdUtility() {
     // Prevent instantiation
   }
 }

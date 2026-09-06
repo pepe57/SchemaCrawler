@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedPseudograph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.schema.NamedObjectKey;
@@ -27,11 +27,11 @@ class SchemaEdgeTest {
     assertThat(first.getReferenceKey(), is(key));
     assertNull(new SchemaEdge(EdgeType.VIEW_DEPENDENCY, null).getReferenceKey());
 
-    final DatabaseObjectNodeId source =
-        new DatabaseObjectNodeId(new NamedObjectKey("ORDERS"), SimpleDatabaseObjectType.table);
-    final DatabaseObjectNodeId target =
-        new DatabaseObjectNodeId(new NamedObjectKey("CUSTOMERS"), SimpleDatabaseObjectType.table);
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+    final DatabaseObjectVertexId source =
+        new DatabaseObjectVertexId(new NamedObjectKey("ORDERS"), SimpleDatabaseObjectType.table);
+    final DatabaseObjectVertexId target =
+        new DatabaseObjectVertexId(new NamedObjectKey("CUSTOMERS"), SimpleDatabaseObjectType.table);
+    final Graph<DatabaseObjectVertexId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
     graph.addVertex(source);
     graph.addVertex(target);

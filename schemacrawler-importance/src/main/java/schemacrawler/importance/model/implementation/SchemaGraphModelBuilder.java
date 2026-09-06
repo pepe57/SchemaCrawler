@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsUndirectedGraph;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
@@ -46,7 +46,7 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
 
     assembly = new SchemaGraphAssembly();
 
-    // First add all nodes (vertices)
+    // First add all vertices.
     for (final Table table : tables) {
       assembly.addNode(table);
     }
@@ -73,31 +73,35 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
   public SchemaGraphModel build() {
     if (assembly.catalogGraph() == null) {
       throw new IllegalStateException(
-          "Build nodes and edges before building the schema graph model");
+          "Build vertices and edges before building the schema graph model");
     }
-    final Map<DatabaseObjectNodeId, TableImportanceMetrics> topologyMetrics =
+    final Map<DatabaseObjectVertexId, TableImportanceMetrics> topologyMetrics =
         GraphMetricsCalculator.calculate(assembly.catalogGraph());
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
-      final DatabaseObjectNodeId nodeId = entry.getKey();
+    for (final Map.Entry<DatabaseObjectVertexId, Table> entry :
+        assembly.tablesByVertexId().entrySet()) {
+      final DatabaseObjectVertexId vertexId = entry.getKey();
       final Table table = entry.getValue();
-      inputs.putInputs(table, topologyMetrics.get(nodeId));
+      inputs.putInputs(table, topologyMetrics.get(vertexId));
     }
 
-    final Map<DatabaseObjectNodeId, Integer> importanceScores =
+    final Map<DatabaseObjectVertexId, Integer> importanceScores =
         ImportanceScoreCalculator.calculate(inputs);
-    for (final Entry<DatabaseObjectNodeId, Integer> entry : importanceScores.entrySet()) {
+    for (final Entry<DatabaseObjectVertexId, Integer> entry : importanceScores.entrySet()) {
       inputs.store(entry.getKey(), entry.getValue());
     }
 
     // Table cluster affinity is direction-independent, unlike schema dependencies
-    final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
+    final Graph<DatabaseObjectVertexId, SchemaEdge> tableSubgraph =
         new AsUndirectedGraph<>(assembly.tableSubgraph());
     final List<TableCluster> tableClusters =
-        TableClusterDetector.detectClusters(tableSubgraph, assembly.tablesByNode());
+        TableClusterDetector.detectClusters(tableSubgraph, assembly.tablesByVertexId());
 
     return new ImmutableSchemaGraphModel(
-        assembly.catalogGraph(), assembly.tableNodes(), assembly.nodeToObject(), tableClusters);
+        assembly.catalogGraph(),
+        assembly.tableVertexIds(),
+        assembly.objectsByVertexId(),
+        tableClusters);
   }
 }

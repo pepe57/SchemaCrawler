@@ -14,7 +14,7 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedPseudograph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.path.PathFinder;
@@ -26,43 +26,44 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class PathFinderTest {
 
-  private record Edge(DatabaseObjectNodeId source, DatabaseObjectNodeId target, SchemaEdge edge) {}
+  private record Edge(
+      DatabaseObjectVertexId source, DatabaseObjectVertexId target, SchemaEdge edge) {}
 
   private static Edge edge(
-      final DatabaseObjectNodeId source,
-      final DatabaseObjectNodeId target,
+      final DatabaseObjectVertexId source,
+      final DatabaseObjectVertexId target,
       final EdgeType edgeType) {
     return new Edge(source, target, new SchemaEdge(edgeType, new NamedObjectKey(edgeType.name())));
   }
 
   private static PathFinder pathFinder(
-      final List<DatabaseObjectNodeId> nodes, final Edge... graphEdges) {
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+      final List<DatabaseObjectVertexId> nodes, final Edge... graphEdges) {
+    final Graph<DatabaseObjectVertexId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
     nodes.forEach(graph::addVertex);
     for (final Edge edge : graphEdges) {
       graph.addEdge(edge.source(), edge.target(), edge.edge());
     }
-    final Set<DatabaseObjectNodeId> tableNodes = Set.copyOf(nodes);
-    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+    final Set<DatabaseObjectVertexId> tableVertexIds = Set.copyOf(nodes);
+    final Map<DatabaseObjectVertexId, LightTable> nodeToTable =
         nodes.stream().collect(toMap(identity(), node -> new LightTable(node.key().toString())));
-    return new PathFinder(new LightSchemaGraphModel(graph, tableNodes, nodeToTable, List.of()));
+    return new PathFinder(new LightSchemaGraphModel(graph, tableVertexIds, nodeToTable, List.of()));
   }
 
-  private static DatabaseObjectNodeId table(final String name) {
-    return new DatabaseObjectNodeId(
+  private static DatabaseObjectVertexId table(final String name) {
+    return new DatabaseObjectVertexId(
         new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
   }
 
   @Test
   void allowsUnlimitedPathDepth() {
-    final DatabaseObjectNodeId table1 = table("TABLE1");
-    final DatabaseObjectNodeId table2 = table("TABLE2");
-    final DatabaseObjectNodeId table3 = table("TABLE3");
-    final DatabaseObjectNodeId table4 = table("TABLE4");
-    final DatabaseObjectNodeId table5 = table("TABLE5");
-    final DatabaseObjectNodeId table6 = table("TABLE6");
-    final DatabaseObjectNodeId table7 = table("TABLE7");
+    final DatabaseObjectVertexId table1 = table("TABLE1");
+    final DatabaseObjectVertexId table2 = table("TABLE2");
+    final DatabaseObjectVertexId table3 = table("TABLE3");
+    final DatabaseObjectVertexId table4 = table("TABLE4");
+    final DatabaseObjectVertexId table5 = table("TABLE5");
+    final DatabaseObjectVertexId table6 = table("TABLE6");
+    final DatabaseObjectVertexId table7 = table("TABLE7");
     final PathFinder pathFinder =
         pathFinder(
             List.of(table1, table2, table3, table4, table5, table6, table7),
@@ -80,12 +81,12 @@ class PathFinderTest {
 
   @Test
   void cachesOnlyEligibleTableEdges() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId procedure =
-        new DatabaseObjectNodeId(
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
+    final DatabaseObjectVertexId procedure =
+        new DatabaseObjectVertexId(
             new NamedObjectKey("PUBLIC", "REFRESH_ORDERS"), SimpleDatabaseObjectType.procedure);
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+    final Graph<DatabaseObjectVertexId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
     graph.addVertex(orders);
     graph.addVertex(customers);
@@ -94,7 +95,7 @@ class PathFinderTest {
     graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
     graph.addEdge(orders, customers, edge(orders, customers, EdgeType.IMPLICIT_ASSOCIATION).edge());
     graph.addEdge(procedure, customers, edge(procedure, customers, EdgeType.FOREIGN_KEY).edge());
-    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+    final Map<DatabaseObjectVertexId, LightTable> nodeToTable =
         Map.of(
             orders,
             new LightTable(orders.key().toString()),
@@ -111,13 +112,13 @@ class PathFinderTest {
 
   @Test
   void cachesTablePathTopology() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
+    final Graph<DatabaseObjectVertexId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
     graph.addVertex(orders);
     graph.addVertex(customers);
-    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+    final Map<DatabaseObjectVertexId, LightTable> nodeToTable =
         Map.of(
             orders,
             new LightTable(orders.key().toString()),
@@ -134,8 +135,8 @@ class PathFinderTest {
 
   @Test
   void fallsBackToImplicitAssociations() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
     final PathFinder pathFinder =
         pathFinder(
             List.of(orders, customers), edge(orders, customers, EdgeType.IMPLICIT_ASSOCIATION));
@@ -148,10 +149,10 @@ class PathFinderTest {
 
   @Test
   void handlesNoPathSameNodeAndUnsupportedNodes() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId procedure =
-        new DatabaseObjectNodeId(
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
+    final DatabaseObjectVertexId procedure =
+        new DatabaseObjectVertexId(
             new NamedObjectKey("PUBLIC", "REFRESH_ORDERS"), SimpleDatabaseObjectType.procedure);
     final PathFinder pathFinder = pathFinder(List.of(orders, customers));
 
@@ -163,9 +164,9 @@ class PathFinderTest {
 
   @Test
   void prefersAnAvailableForeignKeyPath() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId countries = table("COUNTRIES");
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
+    final DatabaseObjectVertexId countries = table("COUNTRIES");
     final PathFinder pathFinder =
         pathFinder(
             List.of(orders, customers, countries),
@@ -181,10 +182,10 @@ class PathFinderTest {
 
   @Test
   void returnsThePathWithFewestEdges() {
-    final DatabaseObjectNodeId orders = table("ORDERS");
-    final DatabaseObjectNodeId customers = table("CUSTOMERS");
-    final DatabaseObjectNodeId countries = table("COUNTRIES");
-    final DatabaseObjectNodeId regions = table("REGIONS");
+    final DatabaseObjectVertexId orders = table("ORDERS");
+    final DatabaseObjectVertexId customers = table("CUSTOMERS");
+    final DatabaseObjectVertexId countries = table("COUNTRIES");
+    final DatabaseObjectVertexId regions = table("REGIONS");
     final PathFinder pathFinder =
         pathFinder(
             List.of(orders, customers, countries, regions),

@@ -16,8 +16,8 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DirectedPseudograph;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
@@ -25,56 +25,57 @@ import schemacrawler.schema.Table;
 /** Holds the mutable graph state and typed catalog indexes used while building a graph model. */
 final class SchemaGraphAssembly {
 
-  private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
-  private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
-  private final Map<DatabaseObjectNodeId, Table> tablesByNode;
+  private final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph;
+  private final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId;
+  private final Map<DatabaseObjectVertexId, Table> tablesByVertexId;
 
   SchemaGraphAssembly() {
     catalogGraph = new DirectedPseudograph<>(SchemaEdge.class);
-    nodeToObject = new LinkedHashMap<>();
-    tablesByNode = new LinkedHashMap<>();
+    objectsByVertexId = new LinkedHashMap<>();
+    tablesByVertexId = new LinkedHashMap<>();
   }
 
   boolean addEdge(final DatabaseObject source, final DatabaseObject target, final SchemaEdge edge) {
     if (source == null || target == null) {
       return false;
     }
-    final DatabaseObjectNodeId sourceNode = DatabaseObjectNodeIdUtility.create(source);
-    final DatabaseObjectNodeId targetNode = DatabaseObjectNodeIdUtility.create(target);
-    if (!catalogGraph.containsVertex(sourceNode) || !catalogGraph.containsVertex(targetNode)) {
+    final DatabaseObjectVertexId sourceVertexId = DatabaseObjectVertexIdUtility.create(source);
+    final DatabaseObjectVertexId targetVertexId = DatabaseObjectVertexIdUtility.create(target);
+    if (!catalogGraph.containsVertex(sourceVertexId)
+        || !catalogGraph.containsVertex(targetVertexId)) {
       return false;
     }
-    catalogGraph.addEdge(sourceNode, targetNode, edge);
+    catalogGraph.addEdge(sourceVertexId, targetVertexId, edge);
     return true;
   }
 
   void addNode(final DatabaseObject databaseObject) {
     requireNonNull(databaseObject, "No database object provided");
-    final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(databaseObject);
-    catalogGraph.addVertex(nodeId);
-    nodeToObject.put(nodeId, databaseObject);
+    final DatabaseObjectVertexId vertexId = DatabaseObjectVertexIdUtility.create(databaseObject);
+    catalogGraph.addVertex(vertexId);
+    objectsByVertexId.put(vertexId, databaseObject);
     if (databaseObject instanceof final Table table) {
-      tablesByNode.put(nodeId, table);
+      tablesByVertexId.put(vertexId, table);
     }
   }
 
-  Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph() {
+  Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph() {
     return catalogGraph;
   }
 
-  Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject() {
-    return nodeToObject;
+  Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId() {
+    return objectsByVertexId;
   }
 
-  Set<DatabaseObjectNodeId> tableNodes() {
-    return tablesByNode.keySet();
+  Set<DatabaseObjectVertexId> tableVertexIds() {
+    return tablesByVertexId.keySet();
   }
 
-  Map<DatabaseObjectNodeId, Table> tablesByNode() {
-    return tablesByNode;
+  Map<DatabaseObjectVertexId, Table> tablesByVertexId() {
+    return tablesByVertexId;
   }
 
-  Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph() {
-    return new AsSubgraph<>(catalogGraph, tablesByNode.keySet());
+  Graph<DatabaseObjectVertexId, SchemaEdge> tableSubgraph() {
+    return new AsSubgraph<>(catalogGraph, tablesByVertexId.keySet());
   }
 }

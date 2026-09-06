@@ -1,10 +1,10 @@
 clusters:
   - id: 922a04f8-d6c0-306d-b534-e059ddd68910
-    anchor_node_id:
+    anchor_vertex_id:
       type: table
     anchor_table_full_name: PUBLIC.BOOKS.BOOKS
     total_cluster_size: 4
-    member_node_ids:
+    member_vertex_ids:
       - type: table
       - type: table
       - type: table
@@ -15,7 +15,7 @@ clusters:
       - PUBLIC."PUBLISHER SALES".REGIONS
       - PUBLIC."PUBLISHER SALES".SALESDATA
 tables:
-  - node_id:
+  - vertex_id:
       type: table
     table_full_name: PUBLIC.BOOKS.BOOKS
     table_importance:
@@ -35,7 +35,7 @@ tables:
         foreign_key_count: 1
         index_count: 3
         trigger_count: 0
-  - node_id:
+  - vertex_id:
       type: table
     table_full_name: PUBLIC.BOOKS.BOOKAUTHORS
     table_importance:

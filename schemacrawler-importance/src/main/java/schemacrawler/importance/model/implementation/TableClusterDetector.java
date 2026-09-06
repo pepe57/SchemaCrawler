@@ -21,7 +21,7 @@ import java.util.UUID;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.clustering.LabelPropagationClustering;
 import org.jgrapht.alg.interfaces.ClusteringAlgorithm;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
@@ -35,54 +35,56 @@ final class TableClusterDetector {
   private static final int MIN_CLUSTER_SIZE = 3;
 
   static List<TableCluster> detectClusters(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
-      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+      final Graph<DatabaseObjectVertexId, SchemaEdge> tableSubgraph,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
     requireNonNull(tableSubgraph, "No table graph provided");
-    requireNonNull(tablesByNode, "No table-node map provided");
+    requireNonNull(tablesByVertexId, "No table vertex ID map provided");
 
     if (tableSubgraph.vertexSet().isEmpty()) {
       return List.of();
     }
 
-    final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, tablesByNode);
-    return sortTableClusters(tableClusters, tablesByNode);
+    final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, tablesByVertexId);
+    return sortTableClusters(tableClusters, tablesByVertexId);
   }
 
   private static TableCluster createTableCluster(
-      final Set<DatabaseObjectNodeId> cluster,
-      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+      final Set<DatabaseObjectVertexId> cluster,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
     // Sorting establishes both the anchor and deterministic member output.
-    final List<DatabaseObjectNodeId> sortedMembers = new ArrayList<>(cluster);
+    final List<DatabaseObjectVertexId> sortedMembers = new ArrayList<>(cluster);
     sortedMembers.sort(
         Comparator.comparingInt(
-                (final DatabaseObjectNodeId nodeId) -> getImportanceScore(nodeId, tablesByNode))
+                (final DatabaseObjectVertexId vertexId) ->
+                    getImportanceScore(vertexId, tablesByVertexId))
             .reversed()
-            .thenComparing(nodeId -> getTableFullName(nodeId, tablesByNode)));
-    final DatabaseObjectNodeId anchorNode = sortedMembers.get(0);
-    final String anchorFullName = getTableFullName(anchorNode, tablesByNode);
+            .thenComparing(vertexId -> getTableFullName(vertexId, tablesByVertexId)));
+    final DatabaseObjectVertexId anchorVertexId = sortedMembers.get(0);
+    final String anchorFullName = getTableFullName(anchorVertexId, tablesByVertexId);
     final UUID clusterId =
         UUID.nameUUIDFromBytes(("cluster:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
-    return new TableCluster(clusterId, anchorNode, sortedMembers);
+    return new TableCluster(clusterId, anchorVertexId, sortedMembers);
   }
 
   private static List<TableCluster> createTableClusters(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
-      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
-    final ClusteringAlgorithm.Clustering<DatabaseObjectNodeId> clustering =
+      final Graph<DatabaseObjectVertexId, SchemaEdge> tableSubgraph,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
+    final ClusteringAlgorithm.Clustering<DatabaseObjectVertexId> clustering =
         new LabelPropagationClustering<>(tableSubgraph, 100, new Random(0)).getClustering();
 
     final List<TableCluster> tableClusters = new ArrayList<>();
-    for (final Set<DatabaseObjectNodeId> cluster : clustering.getClusters()) {
+    for (final Set<DatabaseObjectVertexId> cluster : clustering.getClusters()) {
       if (cluster != null && cluster.size() >= MIN_CLUSTER_SIZE) {
-        tableClusters.add(createTableCluster(cluster, tablesByNode));
+        tableClusters.add(createTableCluster(cluster, tablesByVertexId));
       }
     }
     return tableClusters;
   }
 
   private static int getImportanceScore(
-      final DatabaseObjectNodeId nodeId, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
-    final Table table = tablesByNode.get(nodeId);
+      final DatabaseObjectVertexId vertexId,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
+    final Table table = tablesByVertexId.get(vertexId);
     if (table != null) {
       final TableImportance importance = table.getAttribute(TableImportance.class.getName());
       if (importance != null) {
@@ -93,24 +95,26 @@ final class TableClusterDetector {
   }
 
   private static String getTableFullName(
-      final DatabaseObjectNodeId nodeId, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
-    final Table table = tablesByNode.get(nodeId);
+      final DatabaseObjectVertexId vertexId,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
+    final Table table = tablesByVertexId.get(vertexId);
     if (table != null && table.getFullName() != null) {
       return table.getFullName();
     }
-    return nodeId.key().toString();
+    return vertexId.key().toString();
   }
 
   private static List<TableCluster> sortTableClusters(
-      final List<TableCluster> tableClusters, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+      final List<TableCluster> tableClusters,
+      final Map<DatabaseObjectVertexId, Table> tablesByVertexId) {
     final List<TableCluster> sortedTableClusters = new ArrayList<>(tableClusters);
     sortedTableClusters.sort(
         Comparator.comparingInt(
                 (final TableCluster tableCluster) ->
-                    getImportanceScore(tableCluster.anchorNode(), tablesByNode))
+                    getImportanceScore(tableCluster.anchorVertexId(), tablesByVertexId))
             .reversed()
             .thenComparing(
-                tableCluster -> getTableFullName(tableCluster.anchorNode(), tablesByNode)));
+                tableCluster -> getTableFullName(tableCluster.anchorVertexId(), tablesByVertexId)));
     return List.copyOf(sortedTableClusters);
   }
 

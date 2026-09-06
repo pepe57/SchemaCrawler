@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsUnmodifiableGraph;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
@@ -30,26 +30,26 @@ final class ImmutableSchemaGraphModel implements SchemaGraphModel {
 
   @Serial private static final long serialVersionUID = -2772896374981270459L;
 
-  private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
+  private final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph;
   private final List<TableCluster> tableClusters;
-  private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
-  private final Set<DatabaseObjectNodeId> tableNodes;
+  private final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId;
+  private final Set<DatabaseObjectVertexId> tableVertexIds;
 
   ImmutableSchemaGraphModel(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
-      final Set<DatabaseObjectNodeId> tableNodes,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject,
+      final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph,
+      final Set<DatabaseObjectVertexId> tableVertexIds,
+      final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId,
       final List<TableCluster> tableClusters) {
     this.catalogGraph =
         new AsUnmodifiableGraph<>(
             Objects.requireNonNull(catalogGraph, "No catalog graph provided"));
-    this.tableNodes = Collections.unmodifiableSet(new LinkedHashSet<>(tableNodes));
-    this.nodeToObject = Map.copyOf(nodeToObject);
+    this.tableVertexIds = Collections.unmodifiableSet(new LinkedHashSet<>(tableVertexIds));
+    this.objectsByVertexId = Map.copyOf(objectsByVertexId);
     this.tableClusters = List.copyOf(tableClusters);
   }
 
   @Override
-  public Graph<DatabaseObjectNodeId, SchemaEdge> getCatalogGraph() {
+  public Graph<DatabaseObjectVertexId, SchemaEdge> getCatalogGraph() {
     return catalogGraph;
   }
 
@@ -59,26 +59,27 @@ final class ImmutableSchemaGraphModel implements SchemaGraphModel {
   }
 
   @Override
-  public Set<DatabaseObjectNodeId> getTableNodes() {
-    return tableNodes;
+  public Set<DatabaseObjectVertexId> getTableVertexIds() {
+    return tableVertexIds;
   }
 
   @Override
-  public Optional<DatabaseObject> lookupByVertexNodeId(final DatabaseObjectNodeId vertexNodeId) {
-    if (vertexNodeId == null) {
+  public Optional<DatabaseObject> lookupByVertexId(final DatabaseObjectVertexId vertexId) {
+    if (vertexId == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(nodeToObject.get(vertexNodeId));
+    return Optional.ofNullable(objectsByVertexId.get(vertexId));
   }
 
   @Override
-  public Optional<Table> lookupTableByVertexNodeId(final DatabaseObjectNodeId tableNodeId) {
-    return lookupByVertexNodeId(tableNodeId).filter(Table.class::isInstance).map(Table.class::cast);
+  public Optional<Table> lookupTableByVertexId(final DatabaseObjectVertexId tableVertexId) {
+    return lookupByVertexId(tableVertexId).filter(Table.class::isInstance).map(Table.class::cast);
   }
 
   @Override
-  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
-    return lookupTableByVertexNodeId(tableNodeId)
+  public Optional<TableImportance> lookupTableImportance(
+      final DatabaseObjectVertexId tableVertexId) {
+    return lookupTableByVertexId(tableVertexId)
         .map(table -> table.<TableImportance>getAttribute(TableImportance.class.getName()));
   }
 }

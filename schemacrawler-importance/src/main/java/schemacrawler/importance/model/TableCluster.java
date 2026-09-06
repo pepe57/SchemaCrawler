@@ -18,21 +18,21 @@ import java.util.UUID;
  * A detected cluster of database tables in the schema graph.
  *
  * @param id synthetic unique identifier for the cluster
- * @param anchorNode node with the highest importance score in the table cluster
- * @param memberNodes all member table and view nodes in the table cluster
+ * @param anchorVertexId vertex with the highest importance score in the table cluster
+ * @param memberVertexIds all member table and view vertex IDs in the table cluster
  */
 public record TableCluster(
-    UUID id, DatabaseObjectNodeId anchorNode, List<DatabaseObjectNodeId> memberNodes)
+    UUID id, DatabaseObjectVertexId anchorVertexId, List<DatabaseObjectVertexId> memberVertexIds)
     implements Serializable {
 
   public TableCluster {
     requireNonNull(id, "No table cluster id provided");
-    requireNonNull(anchorNode, "No anchor node provided");
-    requireNonNull(memberNodes, "No member nodes provided");
-    memberNodes = List.copyOf(memberNodes);
-    if (!memberNodes.contains(anchorNode)) {
+    requireNonNull(anchorVertexId, "No anchor vertex ID provided");
+    requireNonNull(memberVertexIds, "No member vertex IDs provided");
+    memberVertexIds = List.copyOf(memberVertexIds);
+    if (!memberVertexIds.contains(anchorVertexId)) {
       throw new IllegalArgumentException(
-          "Member nodes must contain the anchor node: " + anchorNode);
+          "Member vertex IDs must contain the anchor vertex ID: " + anchorVertexId);
     }
   }
 }

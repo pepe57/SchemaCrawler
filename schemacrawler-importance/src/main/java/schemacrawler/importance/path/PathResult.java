@@ -10,10 +10,10 @@ package schemacrawler.importance.path;
 
 import java.util.List;
 import java.util.Objects;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 
 /** An ordered relationship path and the confidence of the edges it required. */
-public record PathResult(List<DatabaseObjectNodeId> path, boolean usesImpliedAssociations) {
+public record PathResult(List<DatabaseObjectVertexId> path, boolean usesImpliedAssociations) {
 
   public PathResult {
     path = List.copyOf(Objects.requireNonNull(path, "No path provided"));

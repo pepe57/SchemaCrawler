@@ -20,8 +20,8 @@ import static org.mockito.Mockito.spy;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Table;
 import schemacrawler.test.utility.crawl.LightPrimaryKey;
@@ -49,16 +49,17 @@ class ImportanceScoreCalculatorTest {
   @Test
   void connectedTableOutranksDisconnectedTable() {
     final Table connectedTable = table("AUTHORS");
-    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
+    final DatabaseObjectVertexId connectedNode =
+        DatabaseObjectVertexIdUtility.create(connectedTable);
     final Table disconnectedTable = table("BOOKAUTHORS");
-    final DatabaseObjectNodeId disconnectedNode =
-        DatabaseObjectNodeIdUtility.create(disconnectedTable);
+    final DatabaseObjectVertexId disconnectedNode =
+        DatabaseObjectVertexIdUtility.create(disconnectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, connectedTable, new TableImportanceMetrics(1, 1, 0.1, 1, 1), false, false);
     put(inputs, disconnectedTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
 
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+    final Map<DatabaseObjectVertexId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     assertThat(scores.get(connectedNode), greaterThan(scores.get(disconnectedNode)));
   }
@@ -66,10 +67,10 @@ class ImportanceScoreCalculatorTest {
   @Test
   void missingPrimaryKeyOrIndexesDampensWithoutZeroingOutTheScore() {
     final Table wellFormedTable = table("WELL_FORMED");
-    final DatabaseObjectNodeId wellFormed = DatabaseObjectNodeIdUtility.create(wellFormedTable);
+    final DatabaseObjectVertexId wellFormed = DatabaseObjectVertexIdUtility.create(wellFormedTable);
     final Table noPrimaryKeyOrIndexesTable = table("NO_PK_NO_INDEXES");
-    final DatabaseObjectNodeId noPrimaryKeyOrIndexes =
-        DatabaseObjectNodeIdUtility.create(noPrimaryKeyOrIndexesTable);
+    final DatabaseObjectVertexId noPrimaryKeyOrIndexes =
+        DatabaseObjectVertexIdUtility.create(noPrimaryKeyOrIndexesTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, wellFormedTable, new TableImportanceMetrics(2, 2, 1.0, 2, 2), true, true);
@@ -80,7 +81,7 @@ class ImportanceScoreCalculatorTest {
         false,
         false);
 
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+    final Map<DatabaseObjectVertexId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     final int dampened = scores.get(noPrimaryKeyOrIndexes);
     final int undampened = scores.get(wellFormed);
@@ -91,11 +92,11 @@ class ImportanceScoreCalculatorTest {
   @Test
   void scoreIsAlwaysWithinZeroToOneHundred() {
     final Table table = table("MAXED_OUT");
-    final DatabaseObjectNodeId maxed = DatabaseObjectNodeIdUtility.create(table);
+    final DatabaseObjectVertexId maxed = DatabaseObjectVertexIdUtility.create(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(100, 100, 1000.0, 500, 500), true, true);
 
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+    final Map<DatabaseObjectVertexId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     assertThat(scores.get(maxed), greaterThanOrEqualTo(0));
     assertThat(scores.get(maxed), lessThanOrEqualTo(100));
@@ -104,7 +105,7 @@ class ImportanceScoreCalculatorTest {
   @Test
   void scoreIsDeterministicAndReproducibleForTheSameInputs() {
     final Table table = table("ORDERS");
-    final DatabaseObjectNodeId node = DatabaseObjectNodeIdUtility.create(table);
+    final DatabaseObjectVertexId node = DatabaseObjectVertexIdUtility.create(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(3, 4, 2.5, 5, 6), true, true);
 
@@ -117,15 +118,16 @@ class ImportanceScoreCalculatorTest {
   @Test
   void wellConnectedTableOutranksPoorlyConnectedTable() {
     final Table smallTable = table("SMALL_LOOKUP");
-    final DatabaseObjectNodeId smallNode = DatabaseObjectNodeIdUtility.create(smallTable);
+    final DatabaseObjectVertexId smallNode = DatabaseObjectVertexIdUtility.create(smallTable);
     final Table connectedTable = table("BOOKAUTHORS");
-    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
+    final DatabaseObjectVertexId connectedNode =
+        DatabaseObjectVertexIdUtility.create(connectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, smallTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
     put(inputs, connectedTable, new TableImportanceMetrics(10, 10, 50.0, 20, 20), false, false);
 
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+    final Map<DatabaseObjectVertexId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     assertThat(scores.get(connectedNode), greaterThan(scores.get(smallNode)));
   }
@@ -133,12 +135,12 @@ class ImportanceScoreCalculatorTest {
   @Test
   void zeroGraphSignalsProduceAValidScore() {
     final Table table = table("ONLY_TABLE");
-    final DatabaseObjectNodeId onlyTable = DatabaseObjectNodeIdUtility.create(table);
+    final DatabaseObjectVertexId onlyTable = DatabaseObjectVertexIdUtility.create(table);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(0, 0, 0.0, 0, 0), true, true);
 
-    final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
+    final Map<DatabaseObjectVertexId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
     assertThat(scores.get(onlyTable), greaterThanOrEqualTo(0));
     assertThat(scores.get(onlyTable), lessThanOrEqualTo(100));

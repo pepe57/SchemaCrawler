@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.jgrapht.Graph;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
@@ -26,24 +26,24 @@ public final class LightSchemaGraphModel implements SchemaGraphModel {
 
   private static final long serialVersionUID = -7403567390131889799L;
 
-  private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
+  private final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph;
   private final List<TableCluster> tableClusters;
-  private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
-  private final Set<DatabaseObjectNodeId> tableNodes;
+  private final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId;
+  private final Set<DatabaseObjectVertexId> tableVertexIds;
 
   public LightSchemaGraphModel(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
-      final Set<DatabaseObjectNodeId> tableNodes,
-      final Map<DatabaseObjectNodeId, ? extends DatabaseObject> nodeToObject,
+      final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph,
+      final Set<DatabaseObjectVertexId> tableVertexIds,
+      final Map<DatabaseObjectVertexId, ? extends DatabaseObject> objectsByVertexId,
       final List<TableCluster> tableClusters) {
     this.catalogGraph = catalogGraph;
-    this.tableNodes = Set.copyOf(tableNodes);
-    this.nodeToObject = Map.copyOf(nodeToObject);
+    this.tableVertexIds = Set.copyOf(tableVertexIds);
+    this.objectsByVertexId = Map.copyOf(objectsByVertexId);
     this.tableClusters = List.copyOf(tableClusters);
   }
 
   @Override
-  public Graph<DatabaseObjectNodeId, SchemaEdge> getCatalogGraph() {
+  public Graph<DatabaseObjectVertexId, SchemaEdge> getCatalogGraph() {
     return catalogGraph;
   }
 
@@ -53,33 +53,34 @@ public final class LightSchemaGraphModel implements SchemaGraphModel {
   }
 
   @Override
-  public Set<DatabaseObjectNodeId> getTableNodes() {
-    return tableNodes;
+  public Set<DatabaseObjectVertexId> getTableVertexIds() {
+    return tableVertexIds;
   }
 
   @Override
-  public Optional<DatabaseObject> lookupByVertexNodeId(final DatabaseObjectNodeId vertexNodeId) {
-    if (vertexNodeId == null || !nodeToObject.containsKey(vertexNodeId)) {
+  public Optional<DatabaseObject> lookupByVertexId(final DatabaseObjectVertexId vertexId) {
+    if (vertexId == null || !objectsByVertexId.containsKey(vertexId)) {
       return Optional.empty();
     }
-    return Optional.ofNullable(nodeToObject.get(vertexNodeId));
+    return Optional.ofNullable(objectsByVertexId.get(vertexId));
   }
 
   @Override
-  public Optional<Table> lookupTableByVertexNodeId(final DatabaseObjectNodeId tableNodeId) {
-    if (tableNodeId == null || tableNodeId.type() != SimpleDatabaseObjectType.table) {
+  public Optional<Table> lookupTableByVertexId(final DatabaseObjectVertexId tableVertexId) {
+    if (tableVertexId == null || tableVertexId.type() != SimpleDatabaseObjectType.table) {
       return Optional.empty();
     }
-    return lookupByVertexNodeId(tableNodeId).filter(Table.class::isInstance).map(Table.class::cast);
+    return lookupByVertexId(tableVertexId).filter(Table.class::isInstance).map(Table.class::cast);
   }
 
   @Override
-  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
-    final Optional<Table> optionalTableByVertexNodeId = lookupTableByVertexNodeId(tableNodeId);
-    if (optionalTableByVertexNodeId.isEmpty()) {
+  public Optional<TableImportance> lookupTableImportance(
+      final DatabaseObjectVertexId tableVertexId) {
+    final Optional<Table> optionalTableByVertexId = lookupTableByVertexId(tableVertexId);
+    if (optionalTableByVertexId.isEmpty()) {
       return Optional.empty();
     }
-    final Table table = optionalTableByVertexNodeId.get();
+    final Table table = optionalTableByVertexId.get();
     return table.getAttribute(TableImportance.class.getName());
   }
 }

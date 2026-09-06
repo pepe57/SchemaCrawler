@@ -13,24 +13,24 @@ import static us.fatehi.utility.Utility.requireNotBlank;
 
 import java.util.List;
 import java.util.UUID;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 
 /** One detected table cluster entry in an importance report. */
 public record ClusterReportEntry(
     UUID id,
-    DatabaseObjectNodeId anchorNodeId,
+    DatabaseObjectVertexId anchorVertexId,
     String anchorTableFullName,
     int totalClusterSize,
-    List<DatabaseObjectNodeId> memberNodeIds,
+    List<DatabaseObjectVertexId> memberVertexIds,
     List<String> memberTableFullNames) {
 
   public ClusterReportEntry {
     requireNonNull(id, "No table cluster id provided");
-    requireNonNull(anchorNodeId, "No anchor node id provided");
+    requireNonNull(anchorVertexId, "No anchor vertex ID provided");
     requireNotBlank(anchorTableFullName, "No anchor table full name provided");
-    requireNonNull(memberNodeIds, "No member node ids provided");
+    requireNonNull(memberVertexIds, "No member vertex IDs provided");
     requireNonNull(memberTableFullNames, "No member table full names provided");
-    memberNodeIds = List.copyOf(memberNodeIds);
+    memberVertexIds = List.copyOf(memberVertexIds);
     memberTableFullNames = List.copyOf(memberTableFullNames);
     if (totalClusterSize < 0) {
       throw new IllegalArgumentException("Total table cluster size cannot be negative");
