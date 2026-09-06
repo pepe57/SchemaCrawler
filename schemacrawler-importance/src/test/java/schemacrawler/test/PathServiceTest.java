@@ -1,5 +1,7 @@
 package schemacrawler.test;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
@@ -19,6 +21,7 @@ import schemacrawler.importance.service.PathResult;
 import schemacrawler.importance.service.PathService;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.test.utility.LightSchemaGraphModel;
+import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class PathServiceTest {
@@ -104,7 +107,9 @@ class PathServiceTest {
       graph.addEdge(edge.source(), edge.target(), edge.edge());
     }
     final Set<DatabaseObjectNodeId> tableNodes = Set.copyOf(nodes);
-    return new PathService(new LightSchemaGraphModel(graph, tableNodes, Map.of(), List.of()));
+    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+        nodes.stream().collect(toMap(identity(), node -> new LightTable(node.key().toString())));
+    return new PathService(new LightSchemaGraphModel(graph, tableNodes, nodeToTable, List.of()));
   }
 
   private static DatabaseObjectNodeId table(final String name) {

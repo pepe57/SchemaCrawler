@@ -8,8 +8,9 @@
 
 package schemacrawler.importance.service;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -30,8 +31,7 @@ public final class PathService {
   private final SchemaGraphModel schemaGraphModel;
 
   public PathService(final SchemaGraphModel schemaGraphModel) {
-    this.schemaGraphModel =
-        Objects.requireNonNull(schemaGraphModel, "No schema graph model provided");
+    this.schemaGraphModel = requireNonNull(schemaGraphModel, "No schema graph model provided");
   }
 
   public PathResult findShortestPath(
@@ -89,10 +89,10 @@ public final class PathService {
   }
 
   private void requireTable(final DatabaseObjectNodeId nodeId, final String role) {
-    Objects.requireNonNull(nodeId, "No %s node provided".formatted(role));
-    if (!schemaGraphModel.getTableNodes().contains(nodeId)) {
+    requireNonNull(nodeId, "No %s node provided".formatted(role));
+    if (schemaGraphModel.lookupTableByVertexNodeId(nodeId).isEmpty()) {
       throw new IllegalArgumentException(
-          "%s node must identify a table in the graph: %s".formatted(role, nodeId));
+          "<%s> node must identify a %s table in the graph".formatted(nodeId, role));
     }
   }
 }
