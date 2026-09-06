@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.service;
+package schemacrawler.importance.path;
 
 import static java.util.Objects.requireNonNull;
 
@@ -24,7 +24,7 @@ import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 
 /** Finds directed shortest paths through table foreign-key relationships. */
-public final class PathService {
+public final class PathFinder {
 
   public static final int DEFAULT_MAX_PATH_DEPTH = 5;
 
@@ -32,7 +32,7 @@ public final class PathService {
   private final Graph<DatabaseObjectNodeId, SchemaEdge> foreignKeyGraph;
   private final Set<DatabaseObjectNodeId> tableNodes;
 
-  public PathService(final SchemaGraphModel schemaGraphModel) {
+  public PathFinder(final SchemaGraphModel schemaGraphModel) {
     requireNonNull(schemaGraphModel, "No schema graph model provided");
     tableNodes = Set.copyOf(schemaGraphModel.getTableNodes());
     final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();

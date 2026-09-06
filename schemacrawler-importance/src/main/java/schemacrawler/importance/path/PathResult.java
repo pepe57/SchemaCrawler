@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.service;
+package schemacrawler.importance.path;
 
 import java.util.List;
 import java.util.Objects;

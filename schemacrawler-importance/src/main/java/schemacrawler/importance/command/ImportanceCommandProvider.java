@@ -43,7 +43,7 @@ public final class ImportanceCommandProvider extends AbstractSchemaCrawlerComman
             Integer.class,
             "Maximum number of table clusters to include in the report (default 5; -1 for all)")
         .addOption(
-            "max-clusters-size",
+            "max-cluster-size",
             Integer.class,
             "Maximum members per table clusters to include in the report (default 5; -1 for all)");
   }

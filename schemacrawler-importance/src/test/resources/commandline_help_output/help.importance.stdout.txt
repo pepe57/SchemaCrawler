@@ -1,10 +1,10 @@
 ** Generate a database object importance report
+      --max-cluster-size=<max-cluster-size>
+         Maximum members per table clusters to include in the report (default
+           5; -1 for all)
       --max-clusters=<max-clusters>
          Maximum number of table clusters to include in the report (default 5;
            -1 for all)
-      --max-clusters-size=<max-clusters-size>
-         Maximum members per table clusters to include in the report (default
-           5; -1 for all)
       --max-important-tables=<max-important-tables>
          Maximum number of important tables to include in the report (default
            5; -1 for all)

@@ -11,7 +11,7 @@ Maximum number of important tables to include in the report (default 5; -1 for a
 max-clusters
 Maximum number of table clusters to include in the report (default 5; -1 for all)
 
-max-clusters-size
+max-cluster-size
 Maximum members per table clusters to include in the report (default 5; -1 for all)
 
 output-format
