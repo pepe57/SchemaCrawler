@@ -15,6 +15,7 @@ import static org.hamcrest.Matchers.nullValue;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
+import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Table;
 import schemacrawler.test.utility.crawl.LightTable;
@@ -39,7 +40,10 @@ class TableImportanceInputsTest {
 
     inputs.putInputs(table, metrics);
 
-    assertThat(inputs.store(nodeId, 1).importanceMetrics(), is(metrics));
+    final var importance = inputs.store(nodeId, 1);
+
+    assertThat(importance.importanceMetrics(), is(metrics));
+    assertThat(table.getAttribute(TableImportance.class.getName()), is(importance));
   }
 
   @Test

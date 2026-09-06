@@ -11,7 +11,6 @@ package schemacrawler.importance.model.implementation;
 import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import org.jgrapht.Graph;
@@ -76,16 +75,6 @@ final class SchemaGraphAssembly {
   }
 
   Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph() {
-    final Set<DatabaseObjectNodeId> tableNodes = tablesByNode.keySet();
-    final Set<SchemaEdge> tableEdges = new LinkedHashSet<>();
-    for (final SchemaEdge edge : catalogGraph.edgeSet()) {
-      final DatabaseObjectNodeId source = catalogGraph.getEdgeSource(edge);
-      final DatabaseObjectNodeId target = catalogGraph.getEdgeTarget(edge);
-      if (tableNodes.contains(source) && tableNodes.contains(target)) {
-        tableEdges.add(edge);
-      }
-    }
-
-    return new AsSubgraph<>(catalogGraph, tableNodes, tableEdges);
+    return new AsSubgraph<>(catalogGraph, tablesByNode.keySet());
   }
 }
