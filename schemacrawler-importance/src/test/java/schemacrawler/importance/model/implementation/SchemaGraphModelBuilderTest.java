@@ -217,7 +217,7 @@ class SchemaGraphModelBuilderTest {
         is(DatabaseObjectNodeIdUtility.create(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
     assertThat(schemaGraphModel.getTableNodes(), hasSize(3));
-    assertThat(schemaGraphModel.getCommunities(), hasSize(1));
+    assertThat(schemaGraphModel.getTableClusters(), hasSize(1));
     assertThat(ordersImportance.get().importanceMetrics().inDegree(), is(2));
     assertThat(ordersImportance.get().importanceMetrics().outDegree(), is(2));
     assertThat(
@@ -233,7 +233,7 @@ class SchemaGraphModelBuilderTest {
                 new DatabaseObjectNodeId(
                     new NamedObjectKey("OTHER"), SimpleDatabaseObjectType.table)));
     assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableNodes()::clear);
-    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getCommunities()::clear);
+    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableClusters()::clear);
   }
 
   @Test

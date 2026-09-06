@@ -86,7 +86,7 @@ class SchemaGraphModelJavaSerializationTest {
     assertThat(
         deserializedSchemaGraphModel.getTableNodes(),
         hasSize(schemaGraphModel.getTableNodes().size()));
-    assertThat(deserializedSchemaGraphModel.getCommunities(), hasSize(greaterThan(0)));
+    assertThat(deserializedSchemaGraphModel.getTableClusters(), hasSize(greaterThan(0)));
 
     final Table table = catalog.getTables().stream().findFirst().orElseThrow();
     final DatabaseObjectNodeId tableNodeId = DatabaseObjectNodeIdUtility.create(table);

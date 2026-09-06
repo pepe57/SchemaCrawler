@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.schema.Catalog;
@@ -69,10 +69,10 @@ class CommunityDetectionServiceTest {
   void returnsEmptyListForEmptyCatalog() {
     final Catalog catalog = catalog(List.of());
     final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
-    final List<SchemaCommunity> communities = graphModel.getCommunities();
+    final List<TableCluster> tableClusters = graphModel.getTableClusters();
 
-    assertThat(communities, hasSize(0));
-    assertThat(graphModel.getCommunities(), hasSize(0));
+    assertThat(tableClusters, hasSize(0));
+    assertThat(graphModel.getTableClusters(), hasSize(0));
   }
 
   @Test
@@ -130,14 +130,14 @@ class CommunityDetectionServiceTest {
 
     final Catalog catalog = catalog(List.of(customers, orders, orderItems));
     final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
-    final List<SchemaCommunity> communities = graphModel.getCommunities();
+    final List<TableCluster> tableClusters = graphModel.getTableClusters();
 
-    assertThat(communities.size(), greaterThan(0));
-    for (final SchemaCommunity community : communities) {
-      assertThat(community.id(), notNullValue());
-      assertThat(community.anchorNode(), notNullValue());
-      assertThat(community.memberNodes().contains(community.anchorNode()), is(true));
+    assertThat(tableClusters.size(), greaterThan(0));
+    for (final TableCluster tableCluster : tableClusters) {
+      assertThat(tableCluster.id(), notNullValue());
+      assertThat(tableCluster.anchorNode(), notNullValue());
+      assertThat(tableCluster.memberNodes().contains(tableCluster.anchorNode()), is(true));
     }
-    assertThat(graphModel.getCommunities(), is(communities));
+    assertThat(graphModel.getTableClusters(), is(tableClusters));
   }
 }

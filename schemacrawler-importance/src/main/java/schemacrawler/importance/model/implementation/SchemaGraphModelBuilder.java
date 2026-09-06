@@ -19,9 +19,9 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Catalog;
@@ -88,9 +88,9 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
         ImportanceScoreCalculator.calculate(inputs);
 
     storeTableImportance(inputs, importanceScores);
-    final List<SchemaCommunity> communities =
+    final List<TableCluster> tableClusters =
         CommunityDetector.detectCommunities(catalogGraph, tableNodes, nodeToObject);
-    return new SchemaGraphModelImpl(catalogGraph, tableNodes, nodeToObject, communities);
+    return new SchemaGraphModelImpl(catalogGraph, tableNodes, nodeToObject, tableClusters);
   }
 
   private void addNode(final DatabaseObject databaseObject) {

@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.options.ImportanceOptions;
 import schemacrawler.inclusionrule.InclusionRule;
@@ -61,17 +61,19 @@ public final class ImportanceReportGenerator {
 
   private List<CommunityReportEntry> reportCommunities(
       final InclusionRule tableInclusionRule, final int maxCommunitySize) {
-    final List<SchemaCommunity> schemaCommunities = schemaGraphModel.getCommunities();
+    final List<TableCluster> tableClusters = schemaGraphModel.getTableClusters();
 
     final List<CommunityReportEntry> entries = new ArrayList<>();
-    for (final SchemaCommunity community : schemaCommunities) {
+    for (final TableCluster tableCluster : tableClusters) {
       final Table anchorTable =
-          schemaGraphModel.lookupTableByVertexNodeId(community.anchorNode()).orElse(null);
+          schemaGraphModel.lookupTableByVertexNodeId(tableCluster.anchorNode()).orElse(null);
       final String anchorFullName =
-          anchorTable != null ? anchorTable.getFullName() : community.anchorNode().key().toString();
+          anchorTable != null
+              ? anchorTable.getFullName()
+              : tableCluster.anchorNode().key().toString();
 
       boolean matchesInclusionRule = false;
-      final List<DatabaseObjectNodeId> allMembers = community.memberNodes();
+      final List<DatabaseObjectNodeId> allMembers = tableCluster.memberNodes();
       final List<String> allFullNames = new ArrayList<>();
 
       for (final DatabaseObjectNodeId memberId : allMembers) {
@@ -102,8 +104,8 @@ public final class ImportanceReportGenerator {
 
       entries.add(
           new CommunityReportEntry(
-              community.id(),
-              community.anchorNode(),
+              tableCluster.id(),
+              tableCluster.anchorNode(),
               anchorFullName,
               totalSize,
               truncatedMembers,

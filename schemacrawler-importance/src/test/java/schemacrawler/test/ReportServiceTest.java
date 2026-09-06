@@ -23,9 +23,9 @@ import java.util.UUID;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.importance.options.ImportanceOptions;
@@ -144,19 +144,19 @@ class ReportServiceTest {
   void usesCommunitiesCachedOnTheSchemaGraphModel() {
     final Table alpha = table("ALPHA");
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
-    final SchemaCommunity cachedCommunity =
-        new SchemaCommunity(UUID.randomUUID(), alphaNode, List.of(alphaNode));
+    final TableCluster cachedTableCluster =
+        new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
     final SchemaGraphModel schemaGraphModel =
         schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode),
             Map.of(alphaNode, alpha),
-            List.of(cachedCommunity));
+            List.of(cachedTableCluster));
 
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
     assertThat(report.communities(), hasSize(1));
-    assertThat(report.communities().get(0).id(), is(cachedCommunity.id()));
+    assertThat(report.communities().get(0).id(), is(cachedTableCluster.id()));
   }
 
   private static ImportanceReportEntry entry(
@@ -172,8 +172,8 @@ class ReportServiceTest {
       final DefaultDirectedGraph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
       final Map<DatabaseObjectNodeId, Table> nodeToObject,
-      final List<SchemaCommunity> communities) {
-    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, communities);
+      final List<TableCluster> tableClusters) {
+    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
   }
 
   private static ImportanceOptions options(final String pattern, final int maxImportantTables) {

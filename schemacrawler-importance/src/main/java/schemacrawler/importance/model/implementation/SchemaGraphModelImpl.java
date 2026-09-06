@@ -19,9 +19,9 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsUnmodifiableGraph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
@@ -31,7 +31,7 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
   @Serial private static final long serialVersionUID = -2772896374981270459L;
 
   private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
-  private final List<SchemaCommunity> communities;
+  private final List<TableCluster> tableClusters;
   private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
   private final Set<DatabaseObjectNodeId> tableNodes;
 
@@ -39,13 +39,13 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
       final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject,
-      final List<SchemaCommunity> communities) {
+      final List<TableCluster> tableClusters) {
     this.catalogGraph =
         new AsUnmodifiableGraph<>(
             Objects.requireNonNull(catalogGraph, "No catalog graph provided"));
     this.tableNodes = Collections.unmodifiableSet(new LinkedHashSet<>(tableNodes));
     this.nodeToObject = Map.copyOf(nodeToObject);
-    this.communities = List.copyOf(communities);
+    this.tableClusters = List.copyOf(tableClusters);
   }
 
   @Override
@@ -54,8 +54,8 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
   }
 
   @Override
-  public List<SchemaCommunity> getCommunities() {
-    return communities;
+  public List<TableCluster> getTableClusters() {
+    return tableClusters;
   }
 
   @Override

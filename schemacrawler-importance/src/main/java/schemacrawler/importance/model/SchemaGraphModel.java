@@ -21,8 +21,8 @@ public interface SchemaGraphModel extends Serializable {
 
   Graph<DatabaseObjectNodeId, SchemaEdge> getCatalogGraph();
 
-  /** Gets the immutable, ordered communities calculated when this model was built. */
-  List<SchemaCommunity> getCommunities();
+  /** Gets the immutable, ordered table clusters calculated when this model was built. */
+  List<TableCluster> getTableClusters();
 
   Set<DatabaseObjectNodeId> getTableNodes();
 

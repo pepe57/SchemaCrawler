@@ -15,17 +15,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A detected domain community of database tables and views in the schema graph.
+ * A detected cluster of database tables in the schema graph.
  *
- * @param id synthetic unique identifier for the community
+ * @param id synthetic unique identifier for the cluster
  * @param anchorNode node with the highest importance score in the community
  * @param memberNodes all member table and view nodes in the community
  */
-public record SchemaCommunity(
+public record TableCluster(
     UUID id, DatabaseObjectNodeId anchorNode, List<DatabaseObjectNodeId> memberNodes)
     implements Serializable {
 
-  public SchemaCommunity {
+  public TableCluster {
     requireNonNull(id, "No community id provided");
     requireNonNull(anchorNode, "No anchor node provided");
     requireNonNull(memberNodes, "No member nodes provided");

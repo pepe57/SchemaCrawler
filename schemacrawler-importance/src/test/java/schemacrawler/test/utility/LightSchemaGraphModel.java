@@ -14,9 +14,9 @@ import java.util.Optional;
 import java.util.Set;
 import org.jgrapht.Graph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
@@ -25,7 +25,7 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 public final class LightSchemaGraphModel implements SchemaGraphModel {
 
   private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
-  private final List<SchemaCommunity> communities;
+  private final List<TableCluster> tableClusters;
   private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
   private final Set<DatabaseObjectNodeId> tableNodes;
 
@@ -33,11 +33,11 @@ public final class LightSchemaGraphModel implements SchemaGraphModel {
       final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
       final Map<DatabaseObjectNodeId, ? extends DatabaseObject> nodeToObject,
-      final List<SchemaCommunity> communities) {
+      final List<TableCluster> tableClusters) {
     this.catalogGraph = catalogGraph;
     this.tableNodes = Set.copyOf(tableNodes);
     this.nodeToObject = Map.copyOf(nodeToObject);
-    this.communities = List.copyOf(communities);
+    this.tableClusters = List.copyOf(tableClusters);
   }
 
   @Override
@@ -46,8 +46,8 @@ public final class LightSchemaGraphModel implements SchemaGraphModel {
   }
 
   @Override
-  public List<SchemaCommunity> getCommunities() {
-    return communities;
+  public List<TableCluster> getTableClusters() {
+    return tableClusters;
   }
 
   @Override

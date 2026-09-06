@@ -25,8 +25,8 @@ import org.jgrapht.alg.interfaces.ClusteringAlgorithm;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.AsUndirectedGraph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
@@ -38,7 +38,7 @@ final class CommunityDetector {
 
   private static final int MIN_CLUSTER_SIZE = 3;
 
-  static List<SchemaCommunity> detectCommunities(
+  static List<TableCluster> detectCommunities(
       final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
@@ -51,26 +51,26 @@ final class CommunityDetector {
 
     final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
         tableSubgraph(fullGraph, tableNodes);
-    final List<SchemaCommunity> communities = createCommunities(tableSubgraph, nodeToObject);
-    return sortCommunities(communities, nodeToObject);
+    final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, nodeToObject);
+    return sortTableClusters(tableClusters, nodeToObject);
   }
 
-  private static List<SchemaCommunity> createCommunities(
+  private static List<TableCluster> createTableClusters(
       final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
     final ClusteringAlgorithm.Clustering<DatabaseObjectNodeId> clustering =
         new LabelPropagationClustering<>(tableSubgraph, 100, new Random(0)).getClustering();
 
-    final List<SchemaCommunity> communities = new ArrayList<>();
+    final List<TableCluster> tableClusters = new ArrayList<>();
     for (final Set<DatabaseObjectNodeId> cluster : clustering.getClusters()) {
       if (cluster != null && cluster.size() >= MIN_CLUSTER_SIZE) {
-        communities.add(createCommunity(cluster, nodeToObject));
+        tableClusters.add(createTableCluster(cluster, nodeToObject));
       }
     }
-    return communities;
+    return tableClusters;
   }
 
-  private static SchemaCommunity createCommunity(
+  private static TableCluster createTableCluster(
       final Set<DatabaseObjectNodeId> cluster,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
     // Sorting establishes both the anchor and deterministic member output.
@@ -87,7 +87,7 @@ final class CommunityDetector {
     final String anchorFullName = getTableFullName(anchorNode, nodeToObject);
     final UUID communityId =
         UUID.nameUUIDFromBytes(("community:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
-    return new SchemaCommunity(communityId, anchorNode, sortedMembers);
+    return new TableCluster(communityId, anchorNode, sortedMembers);
   }
 
   private static int getImportanceScore(
@@ -113,16 +113,17 @@ final class CommunityDetector {
     return nodeId.key().toString();
   }
 
-  private static List<SchemaCommunity> sortCommunities(
-      final List<SchemaCommunity> communities,
+  private static List<TableCluster> sortTableClusters(
+      final List<TableCluster> tableClusters,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
-    return communities.stream()
+    return tableClusters.stream()
         .sorted(
             Comparator.comparingInt(
-                    (final SchemaCommunity community) ->
-                        getImportanceScore(community.anchorNode(), nodeToObject))
+                    (final TableCluster tableCluster) ->
+                        getImportanceScore(tableCluster.anchorNode(), nodeToObject))
                 .reversed()
-                .thenComparing(community -> getTableFullName(community.anchorNode(), nodeToObject)))
+                .thenComparing(
+                    tableCluster -> getTableFullName(tableCluster.anchorNode(), nodeToObject)))
         .toList();
   }
 
