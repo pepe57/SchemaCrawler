@@ -193,7 +193,7 @@ class ReportServiceTest {
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
     assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
-    assertThat(report.tables().get(0).vertexId(), is(betaNode));
+    assertThat(report.tables().get(0).tableVertexId(), is(betaNode));
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
     assertThat(report.clusters(), empty());
   }

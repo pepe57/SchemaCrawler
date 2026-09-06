@@ -11,6 +11,7 @@ package schemacrawler.importance.report;
 import static java.util.Objects.requireNonNull;
 import static us.fatehi.utility.Utility.requireNotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.UUID;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
@@ -18,10 +19,10 @@ import schemacrawler.importance.model.DatabaseObjectVertexId;
 /** One detected table cluster entry in an importance report. */
 public record ClusterReportEntry(
     UUID id,
-    DatabaseObjectVertexId anchorVertexId,
+    @JsonIgnore DatabaseObjectVertexId anchorVertexId,
     String anchorTableFullName,
     int totalClusterSize,
-    List<DatabaseObjectVertexId> memberVertexIds,
+    @JsonIgnore List<DatabaseObjectVertexId> memberVertexIds,
     List<String> memberTableFullNames) {
 
   public ClusterReportEntry {

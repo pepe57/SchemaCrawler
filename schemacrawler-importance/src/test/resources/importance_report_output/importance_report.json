@@ -1,26 +1,11 @@
 {
   "clusters" : [ {
     "id" : "922a04f8-d6c0-306d-b534-e059ddd68910",
-    "anchor_vertex_id" : {
-      "type" : "table"
-    },
     "anchor_table_full_name" : "PUBLIC.BOOKS.BOOKS",
     "total_cluster_size" : 4,
-    "member_vertex_ids" : [ {
-      "type" : "table"
-    }, {
-      "type" : "table"
-    }, {
-      "type" : "table"
-    }, {
-      "type" : "table"
-    } ],
     "member_table_full_names" : [ "PUBLIC.BOOKS.BOOKS", "PUBLIC.\"PUBLISHER SALES\".SALES", "PUBLIC.\"PUBLISHER SALES\".REGIONS", "PUBLIC.\"PUBLISHER SALES\".SALESDATA" ]
   } ],
   "tables" : [ {
-    "vertex_id" : {
-      "type" : "table"
-    },
     "table_full_name" : "PUBLIC.BOOKS.BOOKS",
     "table_importance" : {
       "importance_score" : 73,
@@ -44,9 +29,6 @@
       }
     }
   }, {
-    "vertex_id" : {
-      "type" : "table"
-    },
     "table_full_name" : "PUBLIC.BOOKS.BOOKAUTHORS",
     "table_importance" : {
       "importance_score" : 36,
