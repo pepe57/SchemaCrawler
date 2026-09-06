@@ -29,10 +29,12 @@ final class TableImportanceInputs {
 
   /** Consolidated per-node inputs. */
   record TableImportanceInput(
-      TableTraits tableTraits, TableCounts tableCounts, TableImportanceMetrics importanceMetrics) {}
+      Table table,
+      TableTraits tableTraits,
+      TableCounts tableCounts,
+      TableImportanceMetrics importanceMetrics) {}
 
   private final Map<DatabaseObjectNodeId, TableImportanceInput> inputs = new LinkedHashMap<>();
-  private final Map<DatabaseObjectNodeId, Table> tables = new LinkedHashMap<>();
 
   Iterable<Map.Entry<DatabaseObjectNodeId, TableImportanceInput>> entries() {
     return inputs.entrySet();
@@ -45,27 +47,26 @@ final class TableImportanceInputs {
     final TableTraits tableTraits = TableImportanceUtility.tableTraitsfrom(table);
     final TableCounts tableCounts = TableImportanceUtility.tableCountsfrom(table);
 
-    tables.put(nodeId, table);
-    inputs.put(nodeId, new TableImportanceInput(tableTraits, tableCounts, importanceMetrics));
+    inputs.put(
+        nodeId, new TableImportanceInput(table, tableTraits, tableCounts, importanceMetrics));
   }
 
   TableImportance store(final DatabaseObjectNodeId nodeId, final Integer importanceScore) {
     requireNonNull(nodeId, "No node id provided");
     requireNonNull(importanceScore, "No importance score provided");
 
-    final Table table = tables.get(nodeId);
-    if (table == null) {
+    final TableImportanceInput tableInputs = inputs.get(nodeId);
+    if (tableInputs == null) {
       return null;
     }
 
-    final TableImportanceInputs.TableImportanceInput tableInputs = inputs.get(nodeId);
     final TableImportance tableImportance =
         new TableImportance(
             importanceScore,
             tableInputs.importanceMetrics(),
             tableInputs.tableTraits(),
             tableInputs.tableCounts());
-    table.setAttribute(TableImportance.class.getName(), tableImportance);
+    tableInputs.table().setAttribute(TableImportance.class.getName(), tableImportance);
 
     return tableImportance;
   }

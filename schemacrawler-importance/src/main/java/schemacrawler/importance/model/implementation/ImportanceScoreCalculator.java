@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.Function;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.TableImportanceMetrics;
+import schemacrawler.importance.model.implementation.TableImportanceInputs.TableImportanceInput;
 import schemacrawler.tools.utility.EntityModelType;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
@@ -100,9 +101,9 @@ final class ImportanceScoreCalculator {
     double maxForeignKeyCount = 0;
     double maxTriggerCount = 0;
 
-    for (final Map.Entry<DatabaseObjectNodeId, TableImportanceInputs.TableImportanceInput>
-        inputEntry : inputs.entries()) {
-      final TableImportanceInputs.TableImportanceInput entry = inputEntry.getValue();
+    for (final Map.Entry<DatabaseObjectNodeId, TableImportanceInput> inputEntry :
+        inputs.entries()) {
+      final TableImportanceInput entry = inputEntry.getValue();
       final TableImportanceMetrics nodeMetrics = entry.importanceMetrics();
       final TableCounts nodeCounts = entry.tableCounts();
 
