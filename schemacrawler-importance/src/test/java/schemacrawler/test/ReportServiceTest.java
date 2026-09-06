@@ -159,7 +159,7 @@ class ReportServiceTest {
   }
 
   @Test
-  void returnsAllEntriesWhenMaxTablesIsZeroOrNegative() {
+  void returnsAllEntriesWhenMaxTablesIsNegative() {
     final Table alpha = table("ALPHA");
     final Table beta = table("BETA");
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
@@ -170,10 +170,6 @@ class ReportServiceTest {
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
-
-    final var reportZero =
-        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
-    assertThat(reportZero.tables().size(), is(2));
 
     final var reportNegative =
         new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
@@ -199,6 +195,23 @@ class ReportServiceTest {
     assertThat(report.tables().get(0).nodeId(), is(betaNode));
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
     assertThat(report.clusters(), empty());
+  }
+
+  @Test
+  void returnsNoEntriesWhenMaxTablesIsZero() {
+    final Table alpha = table("ALPHA");
+    final Table beta = table("BETA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectNodeId betaNode = node("BETA");
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode, betaNode),
+            Map.of(alphaNode, alpha, betaNode, beta),
+            List.of());
+
+    final var reportZero = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", 0));
+    assertThat(reportZero.tables(), empty());
   }
 
   @Test
