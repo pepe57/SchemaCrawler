@@ -1,4 +1,4 @@
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -7,7 +7,7 @@ import static org.hamcrest.Matchers.is;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedPseudograph;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.TableImportanceMetrics;
@@ -16,12 +16,17 @@ import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class GraphMetricsCalculatorTest {
 
+  private static DatabaseObjectVertexId node(final String name) {
+    return new DatabaseObjectVertexId(
+        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
+  }
+
   @Test
   void calculatesCompleteSchemaGraphMetricsIncludingUndirectedBridgeCentrality() {
-    final DatabaseObjectNodeId orders = node("ORDERS");
-    final DatabaseObjectNodeId customers = node("CUSTOMERS");
-    final DatabaseObjectNodeId countries = node("COUNTRIES");
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+    final DatabaseObjectVertexId orders = node("ORDERS");
+    final DatabaseObjectVertexId customers = node("CUSTOMERS");
+    final DatabaseObjectVertexId countries = node("COUNTRIES");
+    final Graph<DatabaseObjectVertexId, SchemaEdge> graph =
         new DirectedPseudograph<>(SchemaEdge.class);
     graph.addVertex(orders);
     graph.addVertex(customers);
@@ -48,10 +53,5 @@ class GraphMetricsCalculatorTest {
     assertThat(
         ordersMetrics.betweennessCentrality(),
         greaterThan(countriesMetrics.betweennessCentrality()));
-  }
-
-  private static DatabaseObjectNodeId node(final String name) {
-    return new DatabaseObjectNodeId(
-        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
   }
 }

@@ -1,4 +1,4 @@
-package schemacrawler.test;
+package schemacrawler.importance.model.implementation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.builder.NodeIdFactory;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Procedure;
 import schemacrawler.schema.Synonym;
@@ -14,7 +14,7 @@ import schemacrawler.schema.TableType;
 import schemacrawler.schema.View;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
-class NodeIdFactoryTest {
+class VertexIdFactoryTest {
 
   @Test
   void identifiesSupportedCatalogObjectTypes() {
@@ -26,8 +26,9 @@ class NodeIdFactoryTest {
     final Synonym synonym = mock(Synonym.class);
     when(synonym.key()).thenReturn(new NamedObjectKey("PUBLIC", "CUSTOMERS_ALIAS"));
 
-    assertThat(NodeIdFactory.create(view).type(), is(SimpleDatabaseObjectType.view));
-    assertThat(NodeIdFactory.create(procedure).type(), is(SimpleDatabaseObjectType.procedure));
-    assertThat(NodeIdFactory.create(synonym).type(), is(SimpleDatabaseObjectType.synonym));
+    assertThat(VertexUtility.createVertexId(view).type(), is(SimpleDatabaseObjectType.view));
+    assertThat(
+        VertexUtility.createVertexId(procedure).type(), is(SimpleDatabaseObjectType.procedure));
+    assertThat(VertexUtility.createVertexId(synonym).type(), is(SimpleDatabaseObjectType.synonym));
   }
 }

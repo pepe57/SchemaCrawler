@@ -11,15 +11,18 @@ package schemacrawler.importance.report;
 import static java.util.Objects.requireNonNull;
 import static us.fatehi.utility.Utility.requireNotBlank;
 
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.TableImportance;
 
 /** One table or view in an importance report. */
 public record ImportanceReportEntry(
-    DatabaseObjectNodeId nodeId, String tableFullName, TableImportance tableImportance) {
+    @JsonIgnore DatabaseObjectVertexId tableVertexId,
+    String tableFullName,
+    TableImportance tableImportance) {
 
   public ImportanceReportEntry {
-    requireNonNull(nodeId, "No node id provided");
+    requireNonNull(tableVertexId, "No vertex ID provided");
     requireNotBlank(tableFullName, "No table name provided");
     requireNonNull(tableImportance, "No table importance provided");
   }

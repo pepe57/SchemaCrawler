@@ -13,16 +13,15 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.SchemaCommunity;
-import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.ImportanceModel;
+import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.options.ImportanceOptions;
 import schemacrawler.inclusionrule.InclusionRule;
-import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
-/** Builds filtered, deterministically ordered importance reports from a schema graph model. */
+/** Builds filtered, deterministically ordered importance reports from an importance model. */
 public final class ImportanceReportGenerator {
 
   private static final Comparator<ImportanceReportEntry> IMPORTANCE_REPORT_ENTRY_COMPARATOR =
@@ -40,10 +39,10 @@ public final class ImportanceReportGenerator {
     return List.copyOf(entries.subList(0, limit));
   }
 
-  private final SchemaGraphModel schemaGraphModel;
+  private final ImportanceModel importanceModel;
 
-  public ImportanceReportGenerator(final SchemaGraphModel schemaGraphModel) {
-    this.schemaGraphModel = requireNonNull(schemaGraphModel, "No schema graph model provided");
+  public ImportanceReportGenerator(final ImportanceModel importanceModel) {
+    this.importanceModel = requireNonNull(importanceModel, "No importance model provided");
   }
 
   /** Gets the complete importance report using the supplied inclusion and limit options. */
@@ -52,32 +51,35 @@ public final class ImportanceReportGenerator {
     final InclusionRule tableInclusionRule = options.getTableInclusionRule();
     final List<ImportanceReportEntry> tables =
         reportTables(tableInclusionRule, options.getMaxImportantTables());
-    final List<CommunityReportEntry> communities =
+    final List<ClusterReportEntry> tableClusters =
         limit(
-            reportCommunities(tableInclusionRule, options.getMaxCommunitySize()),
-            options.getMaxCommunities());
+            reportTableClusters(tableInclusionRule, options.getMaxClusterSize()),
+            options.getMaxClusters());
 
-    return new ImportanceReport(communities, tables);
+    return new ImportanceReport(tableClusters, tables);
   }
 
-  private List<CommunityReportEntry> reportCommunities(
-      final InclusionRule tableInclusionRule, final int maxCommunitySize) {
-    final List<SchemaCommunity> schemaCommunities = schemaGraphModel.getCommunities();
+  private List<ClusterReportEntry> reportTableClusters(
+      final InclusionRule tableInclusionRule, final int maxClusterSize) {
+    final List<TableCluster> tableClusters = importanceModel.getTableClusters();
 
-    final List<CommunityReportEntry> entries = new ArrayList<>();
-    for (final SchemaCommunity community : schemaCommunities) {
-      final DatabaseObject anchorObj = schemaGraphModel.getObjectByNodeId(community.anchorNode());
+    final List<ClusterReportEntry> entries = new ArrayList<>();
+    for (final TableCluster tableCluster : tableClusters) {
+      final Table anchorTable =
+          importanceModel.lookupTableByVertexId(tableCluster.anchorVertexId()).orElse(null);
       final String anchorFullName =
-          anchorObj != null ? anchorObj.getFullName() : community.anchorNode().key().toString();
+          anchorTable != null
+              ? anchorTable.getFullName()
+              : tableCluster.anchorVertexId().key().toString();
 
       boolean matchesInclusionRule = false;
-      final List<DatabaseObjectNodeId> allMembers = community.memberNodes();
+      final List<DatabaseObjectVertexId> allMembers = tableCluster.memberVertexIds();
       final List<String> allFullNames = new ArrayList<>();
 
-      for (final DatabaseObjectNodeId memberId : allMembers) {
-        final DatabaseObject memberObj = schemaGraphModel.getObjectByNodeId(memberId);
+      for (final DatabaseObjectVertexId memberId : allMembers) {
+        final Table memberTable = importanceModel.lookupTableByVertexId(memberId).orElse(null);
         final String fullName =
-            memberObj != null ? memberObj.getFullName() : memberId.key().toString();
+            memberTable != null ? memberTable.getFullName() : memberId.key().toString();
         allFullNames.add(fullName);
         if (tableInclusionRule.test(fullName)) {
           matchesInclusionRule = true;
@@ -89,21 +91,21 @@ public final class ImportanceReportGenerator {
       }
 
       final int totalSize = allMembers.size();
-      final List<DatabaseObjectNodeId> truncatedMembers;
+      final List<DatabaseObjectVertexId> truncatedMembers;
       final List<String> truncatedFullNames;
 
-      if (maxCommunitySize > 0 && totalSize > maxCommunitySize) {
-        truncatedMembers = allMembers.subList(0, maxCommunitySize);
-        truncatedFullNames = allFullNames.subList(0, maxCommunitySize);
+      if (maxClusterSize > 0 && totalSize > maxClusterSize) {
+        truncatedMembers = allMembers.subList(0, maxClusterSize);
+        truncatedFullNames = allFullNames.subList(0, maxClusterSize);
       } else {
         truncatedMembers = allMembers;
         truncatedFullNames = allFullNames;
       }
 
       entries.add(
-          new CommunityReportEntry(
-              community.id(),
-              community.anchorNode(),
+          new ClusterReportEntry(
+              tableCluster.id(),
+              tableCluster.anchorVertexId(),
               anchorFullName,
               totalSize,
               truncatedMembers,
@@ -115,16 +117,15 @@ public final class ImportanceReportGenerator {
   private List<ImportanceReportEntry> reportTables(
       final InclusionRule tableInclusionRule, final int maxTables) {
     final List<ImportanceReportEntry> entries = new ArrayList<>();
-    for (final DatabaseObjectNodeId nodeId : schemaGraphModel.getTableNodes()) {
-      final DatabaseObject databaseObject = schemaGraphModel.getObjectByNodeId(nodeId);
-      if (!(databaseObject instanceof final Table table)
-          || !tableInclusionRule.test(table.getFullName())) {
+    for (final DatabaseObjectVertexId vertexId : importanceModel.getTableVertexIds()) {
+      final Table table = importanceModel.lookupTableByVertexId(vertexId).orElse(null);
+      if (table == null || !tableInclusionRule.test(table.getFullName())) {
         continue;
       }
 
       final TableImportance importance = table.getAttribute(TableImportance.class.getName());
       if (importance != null) {
-        entries.add(new ImportanceReportEntry(nodeId, table.getFullName(), importance));
+        entries.add(new ImportanceReportEntry(vertexId, table.getFullName(), importance));
       }
     }
     entries.sort(IMPORTANCE_REPORT_ENTRY_COMPARATOR);

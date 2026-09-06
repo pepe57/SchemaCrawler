@@ -22,45 +22,71 @@ import schemacrawler.tools.options.ConfigUtility;
 class ImportanceOptionsBuilderTest {
 
   @Test
+  void acceptsNullConfigurationAndOptions() {
+    final ImportanceOptionsBuilder builder = ImportanceOptionsBuilder.builder();
+
+    assertThat(builder.fromConfig(null), is(builder));
+    assertThat(builder.fromOptions(null), is(builder));
+  }
+
+  @Test
+  void copiesOptions() {
+    final ImportanceOptions original =
+        ImportanceOptionsBuilder.builder().withTableNamePattern(".*\\.BOOK$").toOptions();
+
+    final ImportanceOptions copy =
+        ImportanceOptionsBuilder.builder().fromOptions(original).toOptions();
+
+    assertThat(copy.getTableInclusionRule(), is(original.getTableInclusionRule()));
+  }
+
+  @Test
+  void createsABuilder() {
+    assertThat(ImportanceOptionsBuilder.builder(), is(notNullValue()));
+  }
+
+  @Test
   void defaultsToIncludingAllTables() {
     final ImportanceOptions options = ImportanceOptionsBuilder.builder().toOptions();
 
     assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
     assertThat(options.getMaxImportantTables(), is(5));
-    assertThat(options.getMaxCommunities(), is(5));
+    assertThat(options.getMaxClusters(), is(5));
   }
 
   @Test
   void handlesReportLimitConfigurationAndOptions() {
     final Config config = ConfigUtility.newConfig();
     config.put("max-important-tables", 10);
-    config.put("max-communities", 3);
+    config.put("max-clusters", 3);
 
     final ImportanceOptions optionsFromConfig =
         ImportanceOptionsBuilder.builder().fromConfig(config).toOptions();
     assertThat(optionsFromConfig.getMaxImportantTables(), is(10));
-    assertThat(optionsFromConfig.getMaxCommunities(), is(3));
+    assertThat(optionsFromConfig.getMaxClusters(), is(3));
 
     final ImportanceOptions optionsFromBuilder =
-        ImportanceOptionsBuilder.builder()
-            .withMaxImportantTables(0)
-            .withMaxCommunities(0)
-            .toOptions();
+        ImportanceOptionsBuilder.builder().withMaxImportantTables(0).withMaxClusters(0).toOptions();
     assertThat(optionsFromBuilder.getMaxImportantTables(), is(0));
-    assertThat(optionsFromBuilder.getMaxCommunities(), is(0));
+    assertThat(optionsFromBuilder.getMaxClusters(), is(0));
 
     final ImportanceOptions copied =
         ImportanceOptionsBuilder.builder().fromOptions(optionsFromBuilder).toOptions();
     assertThat(copied.getMaxImportantTables(), is(0));
-    assertThat(copied.getMaxCommunities(), is(0));
+    assertThat(copied.getMaxClusters(), is(0));
   }
 
   @Test
-  void acceptsNullConfigurationAndOptions() {
-    final ImportanceOptionsBuilder builder = ImportanceOptionsBuilder.builder();
+  void prefersBareCommandLineTableFilter() {
+    final Config config = ConfigUtility.newConfig();
+    config.put("schemacrawler.importance.table-filter", ".*\\.AUTHOR$");
+    config.put("table-filter", ".*\\.BOOK$");
 
-    assertThat(builder.fromConfig(null), is(builder));
-    assertThat(builder.fromOptions(null), is(builder));
+    final ImportanceOptions options =
+        ImportanceOptionsBuilder.builder().fromConfig(config).toOptions();
+
+    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
+    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.AUTHOR"), is(false));
   }
 
   @Test
@@ -88,16 +114,11 @@ class ImportanceOptionsBuilderTest {
   }
 
   @Test
-  void prefersBareCommandLineTableFilter() {
-    final Config config = ConfigUtility.newConfig();
-    config.put("schemacrawler.importance.table-filter", ".*\\.AUTHOR$");
-    config.put("table-filter", ".*\\.BOOK$");
-
+  void replacesANullInclusionRuleWithIncludeAll() {
     final ImportanceOptions options =
-        ImportanceOptionsBuilder.builder().fromConfig(config).toOptions();
+        ImportanceOptionsBuilder.builder().withTableInclusionRule(null).toOptions();
 
     assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
-    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.AUTHOR"), is(false));
   }
 
   @Test
@@ -116,17 +137,6 @@ class ImportanceOptionsBuilderTest {
   }
 
   @Test
-  void copiesOptions() {
-    final ImportanceOptions original =
-        ImportanceOptionsBuilder.builder().withTableNamePattern(".*\\.BOOK$").toOptions();
-
-    final ImportanceOptions copy =
-        ImportanceOptionsBuilder.builder().fromOptions(original).toOptions();
-
-    assertThat(copy.getTableInclusionRule(), is(original.getTableInclusionRule()));
-  }
-
-  @Test
   void usesTheSuppliedInclusionRule() {
     final InclusionRule rule = tableName -> tableName.startsWith("PUBLIC.AUTHOR");
 
@@ -134,18 +144,5 @@ class ImportanceOptionsBuilderTest {
         ImportanceOptionsBuilder.builder().withTableInclusionRule(rule).toOptions();
 
     assertThat(options.getTableInclusionRule(), is(rule));
-  }
-
-  @Test
-  void replacesANullInclusionRuleWithIncludeAll() {
-    final ImportanceOptions options =
-        ImportanceOptionsBuilder.builder().withTableInclusionRule(null).toOptions();
-
-    assertThat(options.getTableInclusionRule().test("PUBLIC.BOOKS.BOOK"), is(true));
-  }
-
-  @Test
-  void createsABuilder() {
-    assertThat(ImportanceOptionsBuilder.builder(), is(notNullValue()));
   }
 }

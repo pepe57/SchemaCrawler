@@ -42,15 +42,31 @@ class CommandProviderTest {
   }
 
   @Test
-  void supportsOnlyKnownOutputFormats() {
+  void providesValidCommandLineCommand(final TestContext testContext) {
     final ImportanceCommandProvider provider = new ImportanceCommandProvider();
-    final OutputOptions json =
-        OutputOptionsBuilder.builder().withOutputFormatValue("json").toOptions();
-    final OutputOptions unsupported =
-        OutputOptionsBuilder.builder().withOutputFormatValue("xml").toOptions();
+    final PluginCommand commandLineCommand = provider.getCommandLineCommand();
 
-    assertThat(provider.supportsOutputFormat("importance", json), is(true));
-    assertThat(provider.supportsOutputFormat("importance", unsupported), is(false));
+    PluginCommandTestUtility.testPluginCommand(testContext, commandLineCommand);
+  }
+
+  @Test
+  void providesValidHelpCommand(final TestContext testContext) {
+    final ImportanceCommandProvider provider = new ImportanceCommandProvider();
+    final PluginCommand helpCommand = provider.getHelpCommand();
+
+    PluginCommandTestUtility.testPluginCommand(testContext, helpCommand);
+  }
+
+  @Test
+  void rejectsAnUnsupportedCommand() {
+    final ImportanceCommandProvider provider = new ImportanceCommandProvider();
+
+    final ExecutionRuntimeException exception =
+        assertThrows(
+            ExecutionRuntimeException.class,
+            () -> provider.newCommand("lint", ConfigUtility.newConfig()));
+
+    assertThat(exception.getMessage(), is("Unsupported command <lint>"));
   }
 
   @Test
@@ -67,30 +83,14 @@ class CommandProviderTest {
   }
 
   @Test
-  void rejectsAnUnsupportedCommand() {
+  void supportsOnlyKnownOutputFormats() {
     final ImportanceCommandProvider provider = new ImportanceCommandProvider();
+    final OutputOptions json =
+        OutputOptionsBuilder.builder().withOutputFormatValue("json").toOptions();
+    final OutputOptions unsupported =
+        OutputOptionsBuilder.builder().withOutputFormatValue("xml").toOptions();
 
-    final ExecutionRuntimeException exception =
-        assertThrows(
-            ExecutionRuntimeException.class,
-            () -> provider.newCommand("lint", ConfigUtility.newConfig()));
-
-    assertThat(exception.getMessage(), is("Unsupported command <lint>"));
-  }
-
-  @Test
-  void providesValidCommandLineCommand(final TestContext testContext) {
-    final ImportanceCommandProvider provider = new ImportanceCommandProvider();
-    final PluginCommand commandLineCommand = provider.getCommandLineCommand();
-
-    PluginCommandTestUtility.testPluginCommand(testContext, commandLineCommand);
-  }
-
-  @Test
-  void providesValidHelpCommand(final TestContext testContext) {
-    final ImportanceCommandProvider provider = new ImportanceCommandProvider();
-    final PluginCommand helpCommand = provider.getHelpCommand();
-
-    PluginCommandTestUtility.testPluginCommand(testContext, helpCommand);
+    assertThat(provider.supportsOutputFormat("importance", json), is(true));
+    assertThat(provider.supportsOutputFormat("importance", unsupported), is(false));
   }
 }

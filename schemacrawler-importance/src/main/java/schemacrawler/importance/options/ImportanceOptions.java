@@ -15,24 +15,24 @@ import schemacrawler.tools.text.options.BaseTextOptions;
 public final class ImportanceOptions extends BaseTextOptions {
 
   private final InclusionRule tableInclusionRule;
-  private final int maxCommunities;
-  private final int maxCommunitySize;
+  private final int maxClusters;
+  private final int maxClusterSize;
   private final int maxImportantTables;
 
   ImportanceOptions(final ImportanceOptionsBuilder builder) {
     super(builder);
     tableInclusionRule = builder.tableInclusionRule;
     maxImportantTables = builder.maxImportantTables;
-    maxCommunities = builder.maxCommunities;
-    maxCommunitySize = builder.maxCommunitySize;
+    maxClusters = builder.maxClusters;
+    maxClusterSize = builder.maxClusterSize;
   }
 
-  public int getMaxCommunities() {
-    return maxCommunities;
+  public int getMaxClusters() {
+    return maxClusters;
   }
 
-  public int getMaxCommunitySize() {
-    return maxCommunitySize;
+  public int getMaxClusterSize() {
+    return maxClusterSize;
   }
 
   public int getMaxImportantTables() {

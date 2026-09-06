@@ -1,38 +1,22 @@
-communities:
-  - id: a61b0ea7-c688-3e35-ab3b-b7593f7fd788
-    anchor_node_id:
-      type: table
+clusters:
+  - id: 922a04f8-d6c0-306d-b534-e059ddd68910
     anchor_table_full_name: PUBLIC.BOOKS.BOOKS
-    total_community_size: 4
-    member_node_ids:
-      - type: table
-      - type: table
-      - type: table
-      - type: table
+    total_cluster_size: 4
     member_table_full_names:
       - PUBLIC.BOOKS.BOOKS
       - PUBLIC."PUBLISHER SALES".SALES
       - PUBLIC."PUBLISHER SALES".REGIONS
       - PUBLIC."PUBLISHER SALES".SALESDATA
-  - id: 4d99692f-a647-393e-b7a9-68ad59737a2e
-    anchor_node_id:
-      type: table
+  - id: 6befb0bf-08a8-3739-b5a5-e6a295eed685
     anchor_table_full_name: PUBLIC.FOR_LINT.WRITERS
-    total_community_size: 4
-    member_node_ids:
-      - type: table
-      - type: table
-      - type: table
-      - type: table
+    total_cluster_size: 4
     member_table_full_names:
       - PUBLIC.FOR_LINT.WRITERS
       - PUBLIC.FOR_LINT.PUBLICATIONS
       - PUBLIC.FOR_LINT.EXTRA_PK
       - PUBLIC.FOR_LINT.PUBLICATIONWRITERS
 tables:
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.BOOKS
+  - table_full_name: PUBLIC.BOOKS.BOOKS
     table_importance:
       importance_score: 73
       importance_metrics:
@@ -50,9 +34,7 @@ tables:
         foreign_key_count: 1
         index_count: 3
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT.WRITERS
+  - table_full_name: PUBLIC.FOR_LINT.WRITERS
     table_importance:
       importance_score: 57
       importance_metrics:
@@ -69,9 +51,7 @@ tables:
         foreign_key_count: 1
         index_count: 6
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT.PUBLICATIONS
+  - table_full_name: PUBLIC.FOR_LINT.PUBLICATIONS
     table_importance:
       importance_score: 53
       importance_metrics:
@@ -88,9 +68,7 @@ tables:
         foreign_key_count: 1
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC."PUBLISHER SALES".SALES
+  - table_full_name: PUBLIC."PUBLISHER SALES".SALES
     table_importance:
       importance_score: 43
       importance_metrics:
@@ -108,9 +86,7 @@ tables:
         foreign_key_count: 3
         index_count: 3
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.BOOKAUTHORS
+  - table_full_name: PUBLIC.BOOKS.BOOKAUTHORS
     table_importance:
       importance_score: 36
       importance_metrics:
@@ -128,9 +104,7 @@ tables:
         foreign_key_count: 2
         index_count: 3
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.AUTHORS
+  - table_full_name: PUBLIC.BOOKS.AUTHORS
     table_importance:
       importance_score: 35
       importance_metrics:
@@ -147,9 +121,7 @@ tables:
         foreign_key_count: 0
         index_count: 3
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.CUSTOMERS
+  - table_full_name: PUBLIC.BOOKS.CUSTOMERS
     table_importance:
       importance_score: 31
       importance_metrics:
@@ -166,9 +138,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC."PUBLISHER SALES".REGIONS
+  - table_full_name: PUBLIC."PUBLISHER SALES".REGIONS
     table_importance:
       importance_score: 30
       importance_metrics:
@@ -185,9 +155,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS."Celebrities"
+  - table_full_name: PUBLIC.BOOKS."Celebrities"
     table_importance:
       importance_score: 28
       importance_metrics:
@@ -204,9 +172,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.PUBLISHERS
+  - table_full_name: PUBLIC.BOOKS.PUBLISHERS
     table_importance:
       importance_score: 28
       importance_metrics:
@@ -223,9 +189,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.ΒΙΒΛΊΑ
+  - table_full_name: PUBLIC.BOOKS.ΒΙΒΛΊΑ
     table_importance:
       importance_score: 25
       importance_metrics:
@@ -242,9 +206,7 @@ tables:
         foreign_key_count: 1
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.COUPONS
+  - table_full_name: PUBLIC.BOOKS.COUPONS
     table_importance:
       importance_score: 21
       importance_metrics:
@@ -262,9 +224,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS.CUSTOMERDATA
+  - table_full_name: PUBLIC.BOOKS.CUSTOMERDATA
     table_importance:
       importance_score: 21
       importance_metrics:
@@ -281,9 +241,7 @@ tables:
         foreign_key_count: 1
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.BOOKS."Celebrity Updates"
+  - table_full_name: PUBLIC.BOOKS."Celebrity Updates"
     table_importance:
       importance_score: 19
       importance_metrics:
@@ -300,9 +258,7 @@ tables:
         foreign_key_count: 1
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT.SELFREFERENCE
+  - table_full_name: PUBLIC.FOR_LINT.SELFREFERENCE
     table_importance:
       importance_score: 18
       importance_metrics:
@@ -319,9 +275,7 @@ tables:
         foreign_key_count: 1
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC."PUBLISHER SALES".SALESDATA
+  - table_full_name: PUBLIC."PUBLISHER SALES".SALESDATA
     table_importance:
       importance_score: 16
       importance_metrics:
@@ -339,9 +293,7 @@ tables:
         foreign_key_count: 0
         index_count: 1
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT.EXTRA_PK
+  - table_full_name: PUBLIC.FOR_LINT.EXTRA_PK
     table_importance:
       importance_score: 14
       importance_metrics:
@@ -357,9 +309,7 @@ tables:
         foreign_key_count: 2
         index_count: 3
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT.PUBLICATIONWRITERS
+  - table_full_name: PUBLIC.FOR_LINT.PUBLICATIONWRITERS
     table_importance:
       importance_score: 11
       importance_metrics:
@@ -377,9 +327,7 @@ tables:
         foreign_key_count: 2
         index_count: 2
         trigger_count: 0
-  - node_id:
-      type: view
-    table_full_name: PUBLIC.BOOKS.AUTHORSLIST
+  - table_full_name: PUBLIC.BOOKS.AUTHORSLIST
     table_importance:
       importance_score: 9
       importance_metrics:
@@ -398,9 +346,7 @@ tables:
         foreign_key_count: 0
         index_count: 0
         trigger_count: 0
-  - node_id:
-      type: table
-    table_full_name: PUBLIC.FOR_LINT."Global Counts"
+  - table_full_name: PUBLIC.FOR_LINT."Global Counts"
     table_importance:
       importance_score: 6
       importance_metrics:

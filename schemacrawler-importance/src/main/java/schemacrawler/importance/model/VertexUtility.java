@@ -6,25 +6,24 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model;
 
 import java.util.Objects;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.utility.MetaDataUtility;
 import us.fatehi.utility.UtilityMarker;
 
 /** Creates stable graph identifiers for SchemaCrawler database objects. */
 @UtilityMarker
-public final class NodeIdFactory {
+public final class VertexUtility {
 
-  public static DatabaseObjectNodeId create(final DatabaseObject databaseObject) {
+  public static DatabaseObjectVertexId createVertexId(final DatabaseObject databaseObject) {
     Objects.requireNonNull(databaseObject, "No database object provided");
-    return new DatabaseObjectNodeId(
+    return new DatabaseObjectVertexId(
         databaseObject.key(), MetaDataUtility.getSimpleTypeName(databaseObject));
   }
 
-  private NodeIdFactory() {
+  private VertexUtility() {
     // Prevent instantiation
   }
 }

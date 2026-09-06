@@ -6,13 +6,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.TableImportanceMetrics;
+import schemacrawler.importance.model.implementation.TableImportanceInputs.TableImportanceInput;
 import schemacrawler.tools.utility.EntityModelType;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
@@ -57,19 +58,19 @@ final class ImportanceScoreCalculator {
 
   /**
    * Catalog-wide maximum structural signals, analogous to {@link TableImportanceMetrics} but
-   * holding the maximum (not per-node) value of each normalized structural signal.
+   * holding the maximum (not per-vertex) value of each normalized structural signal.
    */
   private record MaxGraphMetrics(
       double betweennessCentrality, double impactReachabilityCount, double totalDegree) {}
 
   /**
    * Catalog-wide maximum data-modeling count signals, analogous to {@link TableCounts} but holding
-   * the maximum (not per-node) value of each normalized count signal.
+   * the maximum (not per-vertex) value of each normalized count signal.
    */
   private record MaxTableCounts(
       double attributeColumnCount, double rowCount, double foreignKeyCount, double triggerCount) {}
 
-  /** The two catalog-wide maxima needed to normalize every node's raw signals. */
+  /** The two catalog-wide maxima needed to normalize every vertex's raw signals. */
   private record MaxValues(MaxGraphMetrics graphMetrics, MaxTableCounts tableCounts) {}
 
   private static final double WEIGHT_BETWEENNESS = 0.30;
@@ -85,7 +86,7 @@ final class ImportanceScoreCalculator {
   private static final double DAMPENING_NO_PRIMARY_KEY = 1.00 - 0.15;
   private static final double DAMPENING_NO_INDEXES = 1.00 - 0.10;
 
-  static Map<DatabaseObjectNodeId, Integer> calculate(final TableImportanceInputs inputs) {
+  static Map<DatabaseObjectVertexId, Integer> calculate(final TableImportanceInputs inputs) {
     final MaxValues maxValues = calculateMaxValues(inputs);
     return calculateScores(inputs, maxValues);
   }
@@ -100,11 +101,9 @@ final class ImportanceScoreCalculator {
     double maxForeignKeyCount = 0;
     double maxTriggerCount = 0;
 
-    for (final DatabaseObjectNodeId nodeId : inputs.keySet()) {
-      final TableImportanceInputs.TableImportanceInput entry = inputs.get(nodeId);
-      if (entry == null) {
-        continue;
-      }
+    for (final Map.Entry<DatabaseObjectVertexId, TableImportanceInput> inputEntry :
+        inputs.entries()) {
+      final TableImportanceInput entry = inputEntry.getValue();
       final TableImportanceMetrics nodeMetrics = entry.importanceMetrics();
       final TableCounts nodeCounts = entry.tableCounts();
 
@@ -129,18 +128,17 @@ final class ImportanceScoreCalculator {
             maxAttributeColumnCount, maxRowCount, maxForeignKeyCount, maxTriggerCount));
   }
 
-  private static Map<DatabaseObjectNodeId, Integer> calculateScores(
+  private static Map<DatabaseObjectVertexId, Integer> calculateScores(
       final TableImportanceInputs inputs, final MaxValues maxValues) {
 
     final MaxGraphMetrics maxGraphMetrics = maxValues.graphMetrics();
     final MaxTableCounts maxTableCounts = maxValues.tableCounts();
 
-    final Map<DatabaseObjectNodeId, Integer> scores = new LinkedHashMap<>();
-    for (final DatabaseObjectNodeId nodeId : inputs.keySet()) {
-      final TableImportanceInputs.TableImportanceInput entry = inputs.get(nodeId);
-      if (entry == null) {
-        continue;
-      }
+    final Map<DatabaseObjectVertexId, Integer> scores = new LinkedHashMap<>();
+    for (final Map.Entry<DatabaseObjectVertexId, TableImportanceInputs.TableImportanceInput>
+        inputEntry : inputs.entries()) {
+      final DatabaseObjectVertexId vertexId = inputEntry.getKey();
+      final TableImportanceInputs.TableImportanceInput entry = inputEntry.getValue();
       final TableImportanceMetrics nodeMetrics = entry.importanceMetrics();
       final TableTraits nodeTraits = entry.tableTraits();
       final TableCounts nodeCounts = entry.tableCounts();
@@ -188,7 +186,7 @@ final class ImportanceScoreCalculator {
               * (noPrimaryKey ? DAMPENING_NO_PRIMARY_KEY : 1.0)
               * (noIndexes ? DAMPENING_NO_INDEXES : 1.0);
 
-      scores.put(nodeId, (int) Math.max(0, Math.min(100, Math.round(importanceScore))));
+      scores.put(vertexId, (int) Math.max(0, Math.min(100, Math.round(importanceScore))));
     }
     return Map.copyOf(scores);
   }

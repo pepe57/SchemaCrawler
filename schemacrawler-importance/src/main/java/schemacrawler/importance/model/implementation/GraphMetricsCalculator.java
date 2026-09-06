@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
@@ -16,7 +16,7 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.scoring.BetweennessCentrality;
 import org.jgrapht.graph.AsUndirectedGraph;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import us.fatehi.utility.UtilityMarker;
@@ -31,38 +31,38 @@ import us.fatehi.utility.UtilityMarker;
 @UtilityMarker
 final class GraphMetricsCalculator {
 
-  static Map<DatabaseObjectNodeId, TableImportanceMetrics> calculate(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> graph) {
-    final BetweennessCentrality<DatabaseObjectNodeId, SchemaEdge> centrality =
+  static Map<DatabaseObjectVertexId, TableImportanceMetrics> calculate(
+      final Graph<DatabaseObjectVertexId, SchemaEdge> graph) {
+    final BetweennessCentrality<DatabaseObjectVertexId, SchemaEdge> centrality =
         new BetweennessCentrality<>(new AsUndirectedGraph<>(graph));
-    final Map<DatabaseObjectNodeId, TableImportanceMetrics> metrics = new LinkedHashMap<>();
-    for (final DatabaseObjectNodeId nodeId : graph.vertexSet()) {
+    final Map<DatabaseObjectVertexId, TableImportanceMetrics> metrics = new LinkedHashMap<>();
+    for (final DatabaseObjectVertexId vertexId : graph.vertexSet()) {
       metrics.put(
-          nodeId,
+          vertexId,
           new TableImportanceMetrics(
-              graph.inDegreeOf(nodeId),
-              graph.outDegreeOf(nodeId),
-              centrality.getVertexScore(nodeId),
-              reachableCount(graph, nodeId, false),
-              reachableCount(graph, nodeId, true)));
+              graph.inDegreeOf(vertexId),
+              graph.outDegreeOf(vertexId),
+              centrality.getVertexScore(vertexId),
+              reachableCount(graph, vertexId, false),
+              reachableCount(graph, vertexId, true)));
     }
     return Map.copyOf(metrics);
   }
 
   private static int reachableCount(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> graph,
-      final DatabaseObjectNodeId start,
+      final Graph<DatabaseObjectVertexId, SchemaEdge> graph,
+      final DatabaseObjectVertexId start,
       final boolean reverse) {
-    final Set<DatabaseObjectNodeId> visited = new LinkedHashSet<>();
-    final ArrayDeque<DatabaseObjectNodeId> pending = new ArrayDeque<>();
+    final Set<DatabaseObjectVertexId> visited = new LinkedHashSet<>();
+    final ArrayDeque<DatabaseObjectVertexId> pending = new ArrayDeque<>();
     visited.add(start);
     pending.add(start);
     while (!pending.isEmpty()) {
-      final DatabaseObjectNodeId nodeId = pending.removeFirst();
+      final DatabaseObjectVertexId vertexId = pending.removeFirst();
       final Set<SchemaEdge> edges =
-          reverse ? graph.incomingEdgesOf(nodeId) : graph.outgoingEdgesOf(nodeId);
+          reverse ? graph.incomingEdgesOf(vertexId) : graph.outgoingEdgesOf(vertexId);
       for (final SchemaEdge edge : edges) {
-        final DatabaseObjectNodeId adjacent =
+        final DatabaseObjectVertexId adjacent =
             reverse ? graph.getEdgeSource(edge) : graph.getEdgeTarget(edge);
         if (visited.add(adjacent)) {
           pending.addLast(adjacent);

@@ -9,8 +9,8 @@
 package schemacrawler.importance.command;
 
 import java.io.IOException;
-import schemacrawler.importance.model.SchemaGraphModel;
-import schemacrawler.importance.model.builder.SchemaGraphModelBuilder;
+import schemacrawler.importance.model.ImportanceModel;
+import schemacrawler.importance.model.implementation.ImportanceModelBuilder;
 import schemacrawler.importance.options.ImportanceOptions;
 import schemacrawler.importance.options.ImportanceReportOutputFormat;
 import schemacrawler.importance.report.ImportanceReport;
@@ -36,9 +36,9 @@ public final class ImportanceCommand extends AbstractSchemaCrawlerCommand<Import
 
     final ImportanceReportOutputFormat outputFormat =
         ImportanceReportOutputFormat.fromFormat(getOutputOptions().getOutputFormatValue());
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(getCatalog()).build();
+    final ImportanceModel importanceModel = ImportanceModelBuilder.builder(getCatalog()).build();
     final ImportanceReport report =
-        new ImportanceReportGenerator(schemaGraphModel).report(getCommandOptions());
+        new ImportanceReportGenerator(importanceModel).report(getCommandOptions());
     try {
       ImportanceReportWriter.write(report, outputFormat, getOutputOptions());
     } catch (final IOException e) {
