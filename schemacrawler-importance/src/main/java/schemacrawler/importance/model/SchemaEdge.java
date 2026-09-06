@@ -20,7 +20,7 @@ import schemacrawler.schema.NamedObjectKey;
  */
 public final class SchemaEdge extends DefaultEdge {
 
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = -6813821735696701748L;
 
   private final EdgeType edgeType;
   private final NamedObjectKey referenceKey;
