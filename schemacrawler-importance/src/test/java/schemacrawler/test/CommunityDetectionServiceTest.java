@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableImportance;
-import schemacrawler.importance.model.builder.SchemaGraphModelBuilder;
+import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.ForeignKey;
 import schemacrawler.schema.NamedObjectKey;

@@ -1,4 +1,4 @@
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;

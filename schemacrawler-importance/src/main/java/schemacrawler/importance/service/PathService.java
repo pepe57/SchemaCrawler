@@ -22,7 +22,7 @@ import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 
-/** Finds directed shortest paths through table and view foreign-key relationships. */
+/** Finds directed shortest paths through table foreign-key relationships. */
 public final class PathService {
 
   public static final int DEFAULT_MAX_PATH_DEPTH = 5;
@@ -45,8 +45,8 @@ public final class PathService {
    */
   public PathResult findShortestPath(
       final DatabaseObjectNodeId from, final DatabaseObjectNodeId to, final int maxPathDepth) {
-    requireTableOrView(from, "source");
-    requireTableOrView(to, "target");
+    requireTable(from, "source");
+    requireTable(to, "target");
     if (from.equals(to)) {
       return new PathResult(List.of(from), false);
     }
@@ -75,11 +75,11 @@ public final class PathService {
       final DatabaseObjectNodeId to,
       final Predicate<SchemaEdge> edgeFilter,
       final int maxPathDepth) {
-    final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph = schemaGraphModel.getFullGraph();
+    final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();
     final Set<SchemaEdge> edges =
-        fullGraph.edgeSet().stream().filter(edgeFilter).collect(Collectors.toSet());
+        catalogGraph.edgeSet().stream().filter(edgeFilter).collect(Collectors.toSet());
     final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
-        new AsSubgraph<>(fullGraph, schemaGraphModel.getTableNodes(), edges);
+        new AsSubgraph<>(catalogGraph, schemaGraphModel.getTableNodes(), edges);
     if (!graph.containsVertex(from) || !graph.containsVertex(to)) {
       return null;
     }
@@ -88,11 +88,11 @@ public final class PathService {
     return path != null && maxPathDepth > 0 && path.getLength() > maxPathDepth ? null : path;
   }
 
-  private void requireTableOrView(final DatabaseObjectNodeId nodeId, final String role) {
+  private void requireTable(final DatabaseObjectNodeId nodeId, final String role) {
     Objects.requireNonNull(nodeId, "No %s node provided".formatted(role));
     if (!schemaGraphModel.getTableNodes().contains(nodeId)) {
       throw new IllegalArgumentException(
-          "%s node must identify a table or view in the graph: %s".formatted(role, nodeId));
+          "%s node must identify a table in the graph: %s".formatted(role, nodeId));
     }
   }
 }

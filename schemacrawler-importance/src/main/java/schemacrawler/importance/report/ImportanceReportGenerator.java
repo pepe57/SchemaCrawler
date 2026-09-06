@@ -66,7 +66,8 @@ public final class ImportanceReportGenerator {
 
     final List<CommunityReportEntry> entries = new ArrayList<>();
     for (final SchemaCommunity community : schemaCommunities) {
-      final DatabaseObject anchorObj = schemaGraphModel.getObjectByNodeId(community.anchorNode());
+      final DatabaseObject anchorObj =
+          schemaGraphModel.lookupByVertexNodeId(community.anchorNode()).orElse(null);
       final String anchorFullName =
           anchorObj != null ? anchorObj.getFullName() : community.anchorNode().key().toString();
 
@@ -75,7 +76,8 @@ public final class ImportanceReportGenerator {
       final List<String> allFullNames = new ArrayList<>();
 
       for (final DatabaseObjectNodeId memberId : allMembers) {
-        final DatabaseObject memberObj = schemaGraphModel.getObjectByNodeId(memberId);
+        final DatabaseObject memberObj =
+            schemaGraphModel.lookupByVertexNodeId(memberId).orElse(null);
         final String fullName =
             memberObj != null ? memberObj.getFullName() : memberId.key().toString();
         allFullNames.add(fullName);
@@ -116,7 +118,8 @@ public final class ImportanceReportGenerator {
       final InclusionRule tableInclusionRule, final int maxTables) {
     final List<ImportanceReportEntry> entries = new ArrayList<>();
     for (final DatabaseObjectNodeId nodeId : schemaGraphModel.getTableNodes()) {
-      final DatabaseObject databaseObject = schemaGraphModel.getObjectByNodeId(nodeId);
+      final DatabaseObject databaseObject =
+          schemaGraphModel.lookupByVertexNodeId(nodeId).orElse(null);
       if (!(databaseObject instanceof final Table table)
           || !tableInclusionRule.test(table.getFullName())) {
         continue;

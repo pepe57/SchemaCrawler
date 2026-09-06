@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.test;
+package schemacrawler.importance.model.implementation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -17,7 +17,6 @@ import static org.hamcrest.Matchers.nullValue;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.TableImportanceMetrics;
-import schemacrawler.importance.model.builder.TableImportanceInputs;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;

@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import static schemacrawler.schema.TableConstraintType.implicit_association;
 
@@ -29,11 +29,11 @@ import us.fatehi.utility.UtilityMarker;
 
 /** Adds typed dependency edges from catalog metadata to a schema graph. */
 @UtilityMarker
-public final class EdgeFactory {
+final class EdgeFactory {
 
   private static final Logger LOGGER = Logger.getLogger(EdgeFactory.class.getName());
 
-  public static void addEdges(
+  static void addEdges(
       final Collection<? extends Table> tables,
       final Collection<? extends Routine> routines,
       final Collection<? extends Synonym> synonyms,

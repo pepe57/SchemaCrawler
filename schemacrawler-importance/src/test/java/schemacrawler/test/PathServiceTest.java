@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.service.PathResult;
 import schemacrawler.importance.service.PathService;
 import schemacrawler.schema.NamedObjectKey;
+import schemacrawler.test.utility.LightSchemaGraphModel;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class PathServiceTest {
@@ -103,7 +103,8 @@ class PathServiceTest {
     for (final Edge edge : graphEdges) {
       graph.addEdge(edge.source(), edge.target(), edge.edge());
     }
-    return new PathService(new SchemaGraphModel(graph, Set.copyOf(nodes), Map.of(), List.of()));
+    final Set<DatabaseObjectNodeId> tableNodes = Set.copyOf(nodes);
+    return new PathService(new LightSchemaGraphModel(graph, tableNodes, Map.of(), List.of()));
   }
 
   private static DatabaseObjectNodeId table(final String name) {

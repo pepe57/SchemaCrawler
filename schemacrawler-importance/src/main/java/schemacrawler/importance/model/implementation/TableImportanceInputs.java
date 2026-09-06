@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import static java.util.Objects.requireNonNull;
 
@@ -30,10 +30,10 @@ import schemacrawler.tools.utility.TableTraits;
  * that node. This centralizes the "all three inputs are present" check that would otherwise be
  * duplicated across every consumer of the three maps.
  */
-public final class TableImportanceInputs {
+final class TableImportanceInputs {
 
   /** Consolidated per-node inputs, present only once all three values have been put. */
-  public record TableImportanceInput(
+  record TableImportanceInput(
       TableTraits tableTraits, TableCounts tableCounts, TableImportanceMetrics importanceMetrics) {}
 
   private final Map<DatabaseObjectNodeId, TableTraits> traits = new LinkedHashMap<>();
@@ -49,7 +49,7 @@ public final class TableImportanceInputs {
    * @return an {@link TableImportanceInput} combining all three inputs, or {@code null} if any of
    *     the three has not been put for this node
    */
-  public TableImportanceInput get(final DatabaseObjectNodeId nodeId) {
+  TableImportanceInput get(final DatabaseObjectNodeId nodeId) {
     final TableTraits nodeTraits = traits.get(nodeId);
     final TableCounts nodeCounts = counts.get(nodeId);
     final TableImportanceMetrics nodeGraphMetrics = graphMetrics.get(nodeId);
@@ -65,25 +65,25 @@ public final class TableImportanceInputs {
    *
    * @return the union of node ids across all put calls
    */
-  public Set<DatabaseObjectNodeId> keySet() {
+  Set<DatabaseObjectNodeId> keySet() {
     return Set.copyOf(nodeIds);
   }
 
-  public void put(final DatabaseObjectNodeId nodeId, final TableCounts value) {
+  void put(final DatabaseObjectNodeId nodeId, final TableCounts value) {
     requireNonNull(nodeId, "No database node provided");
     requireNonNull(value, "No value provided");
     counts.put(nodeId, value);
     nodeIds.add(nodeId);
   }
 
-  public void put(final DatabaseObjectNodeId nodeId, final TableImportanceMetrics value) {
+  void put(final DatabaseObjectNodeId nodeId, final TableImportanceMetrics value) {
     requireNonNull(nodeId, "No database node provided");
     requireNonNull(value, "No value provided");
     graphMetrics.put(nodeId, value);
     nodeIds.add(nodeId);
   }
 
-  public void put(final DatabaseObjectNodeId nodeId, final TableTraits value) {
+  void put(final DatabaseObjectNodeId nodeId, final TableTraits value) {
     requireNonNull(nodeId, "No database node provided");
     requireNonNull(value, "No value provided");
     traits.put(nodeId, value);

@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.builder;
+package schemacrawler.importance.model.implementation;
 
 import static java.util.Objects.requireNonNull;
 
@@ -38,16 +38,16 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     return new SchemaGraphModelBuilder(catalog);
   }
 
-  private final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph;
+  private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
   private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
-  private final Set<DatabaseObjectNodeId> tableViewNodes;
+  private final Set<DatabaseObjectNodeId> tableNodes;
 
   private SchemaGraphModelBuilder(final Catalog catalog) {
     requireNonNull(catalog, "No catalog provided");
 
-    fullGraph = new DirectedPseudograph<>(SchemaEdge.class);
+    catalogGraph = new DirectedPseudograph<>(SchemaEdge.class);
     nodeToObject = new LinkedHashMap<>();
-    tableViewNodes = new LinkedHashSet<>();
+    tableNodes = new LinkedHashSet<>();
 
     for (final Table table : catalog.getTables()) {
       addNode(table);
@@ -59,17 +59,17 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
       addNode(synonym);
     }
     EdgeFactory.addEdges(
-        catalog.getTables(), catalog.getRoutines(), catalog.getSynonyms(), fullGraph);
+        catalog.getTables(), catalog.getRoutines(), catalog.getSynonyms(), catalogGraph);
   }
 
   @Override
   public SchemaGraphModel build() {
-    if (fullGraph == null) {
+    if (catalogGraph == null) {
       throw new IllegalStateException(
           "Build nodes and edges before building the schema graph model");
     }
     final Map<DatabaseObjectNodeId, TableImportanceMetrics> topologyMetrics =
-        GraphMetricsCalculator.calculate(fullGraph);
+        GraphMetricsCalculator.calculate(catalogGraph);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     for (final Map.Entry<DatabaseObjectNodeId, TableImportanceMetrics> entry :
@@ -88,17 +88,17 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
 
     storeTableImportance(inputs, importanceScores);
     final List<SchemaCommunity> communities =
-        CommunityDetector.detectCommunities(fullGraph, tableViewNodes, nodeToObject);
-    return new SchemaGraphModel(fullGraph, tableViewNodes, nodeToObject, communities);
+        CommunityDetector.detectCommunities(catalogGraph, tableNodes, nodeToObject);
+    return new SchemaGraphModelImpl(catalogGraph, tableNodes, nodeToObject, communities);
   }
 
   private void addNode(final DatabaseObject databaseObject) {
     final DatabaseObjectNodeId nodeId = NodeIdFactory.create(databaseObject);
-    fullGraph.addVertex(nodeId);
+    catalogGraph.addVertex(nodeId);
     nodeToObject.put(nodeId, databaseObject);
     if (nodeId.type() == SimpleDatabaseObjectType.table
         || nodeId.type() == SimpleDatabaseObjectType.view) {
-      tableViewNodes.add(nodeId);
+      tableNodes.add(nodeId);
     }
   }
 

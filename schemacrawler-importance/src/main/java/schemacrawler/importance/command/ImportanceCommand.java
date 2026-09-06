@@ -10,7 +10,7 @@ package schemacrawler.importance.command;
 
 import java.io.IOException;
 import schemacrawler.importance.model.SchemaGraphModel;
-import schemacrawler.importance.model.builder.SchemaGraphModelBuilder;
+import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.importance.options.ImportanceOptions;
 import schemacrawler.importance.options.ImportanceReportOutputFormat;
 import schemacrawler.importance.report.ImportanceReport;

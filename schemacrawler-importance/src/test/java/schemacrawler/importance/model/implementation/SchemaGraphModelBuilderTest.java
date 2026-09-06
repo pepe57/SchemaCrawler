@@ -1,4 +1,4 @@
-package schemacrawler.test;
+package schemacrawler.importance.model.implementation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -26,8 +26,6 @@ import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableImportance;
-import schemacrawler.importance.model.builder.NodeIdFactory;
-import schemacrawler.importance.model.builder.SchemaGraphModelBuilder;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.ForeignKey;
 import schemacrawler.schema.NamedObjectKey;
@@ -105,7 +103,7 @@ class SchemaGraphModelBuilderTest {
     final Catalog catalog = catalog();
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
-    assertThat(schemaGraphModel.getFullGraph().vertexSet(), hasSize(0));
+    assertThat(schemaGraphModel.getCatalogGraph().vertexSet(), hasSize(0));
   }
 
   @Test
@@ -126,7 +124,7 @@ class SchemaGraphModelBuilderTest {
     final Catalog catalog = catalog(List.of(customers), List.of(), List.of());
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
-    assertThat(schemaGraphModel.getFullGraph().vertexSet(), hasSize(1));
+    assertThat(schemaGraphModel.getCatalogGraph().vertexSet(), hasSize(1));
     assertThat(schemaGraphModel.getTableNodes(), hasSize(1));
     assertThat(
         customers
@@ -178,41 +176,41 @@ class SchemaGraphModelBuilderTest {
             List.of(customerAlias));
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
-    final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph = schemaGraphModel.getFullGraph();
-    assertThat(fullGraph.vertexSet(), hasSize(5));
-    assertThat(fullGraph.edgeSet(), hasSize(5));
-    assertThat(edgesOfType(fullGraph, EdgeType.FOREIGN_KEY), is(1));
-    assertThat(edgesOfType(fullGraph, EdgeType.IMPLICIT_ASSOCIATION), is(1));
-    assertThat(edgesOfType(fullGraph, EdgeType.VIEW_DEPENDENCY), is(1));
-    assertThat(edgesOfType(fullGraph, EdgeType.ROUTINE_DEPENDENCY), is(1));
-    assertThat(edgesOfType(fullGraph, EdgeType.SYNONYM_RESOLUTION), is(1));
+    final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();
+    assertThat(catalogGraph.vertexSet(), hasSize(5));
+    assertThat(catalogGraph.edgeSet(), hasSize(5));
+    assertThat(edgesOfType(catalogGraph, EdgeType.FOREIGN_KEY), is(1));
+    assertThat(edgesOfType(catalogGraph, EdgeType.IMPLICIT_ASSOCIATION), is(1));
+    assertThat(edgesOfType(catalogGraph, EdgeType.VIEW_DEPENDENCY), is(1));
+    assertThat(edgesOfType(catalogGraph, EdgeType.ROUTINE_DEPENDENCY), is(1));
+    assertThat(edgesOfType(catalogGraph, EdgeType.SYNONYM_RESOLUTION), is(1));
     final SchemaEdge foreignKeyEdge =
-        fullGraph.edgeSet().stream()
+        catalogGraph.edgeSet().stream()
             .filter(edge -> edge.getEdgeType() == EdgeType.FOREIGN_KEY)
             .findFirst()
             .orElseThrow();
     final SchemaEdge implicitAssocEdge =
-        fullGraph.edgeSet().stream()
+        catalogGraph.edgeSet().stream()
             .filter(edge -> edge.getEdgeType() == EdgeType.IMPLICIT_ASSOCIATION)
             .findFirst()
             .orElseThrow();
     final SchemaEdge viewDepEdge =
-        fullGraph.edgeSet().stream()
+        catalogGraph.edgeSet().stream()
             .filter(edge -> edge.getEdgeType() == EdgeType.VIEW_DEPENDENCY)
             .findFirst()
             .orElseThrow();
     final SchemaEdge routineDepEdge =
-        fullGraph.edgeSet().stream()
+        catalogGraph.edgeSet().stream()
             .filter(edge -> edge.getEdgeType() == EdgeType.ROUTINE_DEPENDENCY)
             .findFirst()
             .orElseThrow();
     final SchemaEdge synonymResEdge =
-        fullGraph.edgeSet().stream()
+        catalogGraph.edgeSet().stream()
             .filter(edge -> edge.getEdgeType() == EdgeType.SYNONYM_RESOLUTION)
             .findFirst()
             .orElseThrow();
-    assertThat(fullGraph.getEdgeSource(foreignKeyEdge), is(NodeIdFactory.create(orders)));
-    assertThat(fullGraph.getEdgeTarget(foreignKeyEdge), is(NodeIdFactory.create(customers)));
+    assertThat(catalogGraph.getEdgeSource(foreignKeyEdge), is(NodeIdFactory.create(orders)));
+    assertThat(catalogGraph.getEdgeTarget(foreignKeyEdge), is(NodeIdFactory.create(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
     assertThat(schemaGraphModel.getTableNodes(), hasSize(3));
     assertThat(schemaGraphModel.getCommunities(), hasSize(1));
@@ -227,7 +225,7 @@ class SchemaGraphModelBuilderTest {
     assertThrows(
         UnsupportedOperationException.class,
         () ->
-            fullGraph.addVertex(
+            catalogGraph.addVertex(
                 new DatabaseObjectNodeId(
                     new NamedObjectKey("OTHER"), SimpleDatabaseObjectType.table)));
     assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableNodes()::clear);
@@ -235,7 +233,7 @@ class SchemaGraphModelBuilderTest {
   }
 
   @Test
-  void storesAnImportanceScoreWithinZeroToOneHundredForEveryTableAndView() {
+  void storesAnImportanceScoreWithinZeroToOneHundredForEveryTable() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
     final AtomicReference<TableImportance> customersImportance = new AtomicReference<>();
@@ -278,7 +276,11 @@ class SchemaGraphModelBuilderTest {
     final Catalog catalog = catalog(List.of(table), List.<Routine>of(procedure), List.of());
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
-    assertThat(schemaGraphModel.getObjectByNodeId(NodeIdFactory.create(table)), is(table));
-    assertThat(schemaGraphModel.getObjectByNodeId(NodeIdFactory.create(procedure)), is(procedure));
+    assertThat(
+        schemaGraphModel.lookupByVertexNodeId(NodeIdFactory.create(table)).orElseThrow(),
+        is(table));
+    assertThat(
+        schemaGraphModel.lookupByVertexNodeId(NodeIdFactory.create(procedure)).orElseThrow(),
+        is(procedure));
   }
 }

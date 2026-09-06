@@ -35,6 +35,7 @@ import schemacrawler.importance.report.ImportanceReportGenerator;
 import schemacrawler.inclusionrule.RegularExpressionRule;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Table;
+import schemacrawler.test.utility.LightSchemaGraphModel;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
@@ -48,7 +49,7 @@ class ReportServiceTest {
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final DatabaseObjectNodeId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
@@ -69,7 +70,7 @@ class ReportServiceTest {
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final DatabaseObjectNodeId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
@@ -86,7 +87,7 @@ class ReportServiceTest {
     final Table alpha = table("ALPHA");
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode),
             Map.of(alphaNode, alpha),
@@ -105,7 +106,7 @@ class ReportServiceTest {
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final DatabaseObjectNodeId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
@@ -124,7 +125,7 @@ class ReportServiceTest {
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final DatabaseObjectNodeId betaNode = node("BETA");
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
@@ -146,7 +147,7 @@ class ReportServiceTest {
     final SchemaCommunity cachedCommunity =
         new SchemaCommunity(UUID.randomUUID(), alphaNode, List.of(alphaNode));
     final SchemaGraphModel schemaGraphModel =
-        new SchemaGraphModel(
+        schemaGraphModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode),
             Map.of(alphaNode, alpha),
@@ -165,6 +166,14 @@ class ReportServiceTest {
         tableFullName,
         new TableImportance(
             score(tableFullName), metrics(tableFullName), new TableTraits(), new TableCounts()));
+  }
+
+  private static SchemaGraphModel schemaGraphModel(
+      final DefaultDirectedGraph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
+      final Set<DatabaseObjectNodeId> tableNodes,
+      final Map<DatabaseObjectNodeId, Table> nodeToObject,
+      final List<SchemaCommunity> communities) {
+    return new LightSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, communities);
   }
 
   private static ImportanceOptions options(final String pattern, final int maxImportantTables) {
