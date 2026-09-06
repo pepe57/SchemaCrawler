@@ -158,6 +158,34 @@ class ReportServiceTest {
     assertThat(report.communities().get(0).id(), is(cachedTableCluster.id()));
   }
 
+  @Test
+  void limitsTooManyTableClusters() {
+    final Table alpha = table("ALPHA");
+    final Table beta = table("BETA");
+    final DatabaseObjectNodeId alphaNode = node("ALPHA");
+    final DatabaseObjectNodeId betaNode = node("BETA");
+    final TableCluster firstCluster =
+        new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
+    final TableCluster secondCluster =
+        new TableCluster(UUID.randomUUID(), betaNode, List.of(betaNode));
+    final SchemaGraphModel schemaGraphModel =
+        schemaGraphModel(
+            new DefaultDirectedGraph<>(SchemaEdge.class),
+            Set.of(alphaNode, betaNode),
+            Map.of(alphaNode, alpha, betaNode, beta),
+            List.of(firstCluster, secondCluster));
+
+    final ImportanceOptions options =
+        ImportanceOptionsBuilder.builder()
+            .withTableInclusionRule(new RegularExpressionRule(".*", ""))
+            .withMaxCommunities(1)
+            .toOptions();
+    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options);
+
+    assertThat(report.communities(), hasSize(1));
+    assertThat(report.communities().get(0).id(), is(firstCluster.id()));
+  }
+
   private static ImportanceReportEntry entry(
       final DatabaseObjectNodeId nodeId, final String tableFullName) {
     return new ImportanceReportEntry(

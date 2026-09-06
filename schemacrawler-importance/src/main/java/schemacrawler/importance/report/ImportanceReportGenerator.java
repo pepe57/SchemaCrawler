@@ -51,15 +51,15 @@ public final class ImportanceReportGenerator {
     final InclusionRule tableInclusionRule = options.getTableInclusionRule();
     final List<ImportanceReportEntry> tables =
         reportTables(tableInclusionRule, options.getMaxImportantTables());
-    final List<CommunityReportEntry> communities =
+    final List<CommunityReportEntry> tableClusters =
         limit(
-            reportCommunities(tableInclusionRule, options.getMaxCommunitySize()),
+            reportTableClusters(tableInclusionRule, options.getMaxCommunitySize()),
             options.getMaxCommunities());
 
-    return new ImportanceReport(communities, tables);
+    return new ImportanceReport(tableClusters, tables);
   }
 
-  private List<CommunityReportEntry> reportCommunities(
+  private List<CommunityReportEntry> reportTableClusters(
       final InclusionRule tableInclusionRule, final int maxCommunitySize) {
     final List<TableCluster> tableClusters = schemaGraphModel.getTableClusters();
 
