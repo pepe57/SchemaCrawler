@@ -10,11 +10,13 @@ package schemacrawler.importance.model;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Serializable;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 /** Identifies a schema graph vertex by its database key and object type. */
-public record DatabaseObjectNodeId(NamedObjectKey key, SimpleDatabaseObjectType type) {
+public record DatabaseObjectNodeId(NamedObjectKey key, SimpleDatabaseObjectType type)
+    implements Serializable {
 
   public DatabaseObjectNodeId {
     requireNonNull(key, "No object key provided");

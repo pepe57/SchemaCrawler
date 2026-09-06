@@ -8,6 +8,7 @@
 
 package schemacrawler.importance.model.implementation;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +27,8 @@ import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
 final class SchemaGraphModelImpl implements SchemaGraphModel {
+
+  @Serial private static final long serialVersionUID = -2772896374981270459L;
 
   private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
   private final List<SchemaCommunity> communities;
@@ -76,6 +79,6 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
   @Override
   public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
     return lookupTableByVertexNodeId(tableNodeId)
-        .flatMap(table -> table.getAttribute(TableImportance.class.getName()));
+        .map(table -> table.<TableImportance>getAttribute(TableImportance.class.getName()));
   }
 }

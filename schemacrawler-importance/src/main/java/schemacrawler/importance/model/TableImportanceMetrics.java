@@ -8,10 +8,13 @@
 
 package schemacrawler.importance.model;
 
+import java.io.Serializable;
+
 /** Immutable topology metrics for one schema graph object. */
 public record TableImportanceMetrics(
     int inDegree,
     int outDegree,
     double betweennessCentrality,
     int dependencyReachabilityCount,
-    int impactReachabilityCount) {}
+    int impactReachabilityCount)
+    implements Serializable {}

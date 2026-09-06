@@ -10,6 +10,7 @@ package schemacrawler.importance.model;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Serializable;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
 
@@ -19,7 +20,7 @@ public record TableImportance(
     TableImportanceMetrics importanceMetrics,
     TableTraits tableTraits,
     TableCounts tableCounts)
-    implements Comparable<TableImportance> {
+    implements Comparable<TableImportance>, Serializable {
 
   public TableImportance {
     if (importanceScore < 0 || importanceScore > 100) {

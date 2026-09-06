@@ -8,6 +8,7 @@
 
 package schemacrawler.importance.model;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,7 +17,7 @@ import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
 /** Immutable graph and object lookup data built from a SchemaCrawler catalog. */
-public interface SchemaGraphModel {
+public interface SchemaGraphModel extends Serializable {
 
   Graph<DatabaseObjectNodeId, SchemaEdge> getCatalogGraph();
 

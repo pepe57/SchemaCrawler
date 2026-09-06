@@ -10,6 +10,7 @@ package schemacrawler.importance.model;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,7 +22,8 @@ import java.util.UUID;
  * @param memberNodes all member table and view nodes in the community
  */
 public record SchemaCommunity(
-    UUID id, DatabaseObjectNodeId anchorNode, List<DatabaseObjectNodeId> memberNodes) {
+    UUID id, DatabaseObjectNodeId anchorNode, List<DatabaseObjectNodeId> memberNodes)
+    implements Serializable {
 
   public SchemaCommunity {
     requireNonNull(id, "No community id provided");
