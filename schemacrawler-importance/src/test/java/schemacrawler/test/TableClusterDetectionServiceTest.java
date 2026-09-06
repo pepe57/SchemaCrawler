@@ -29,7 +29,7 @@ import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Table;
 import schemacrawler.test.utility.crawl.LightTable;
 
-class CommunityDetectionServiceTest {
+class TableClusterDetectionServiceTest {
 
   private static Catalog catalog(final List<Table> tables) {
     final Catalog catalog = mock(Catalog.class);
@@ -44,7 +44,7 @@ class CommunityDetectionServiceTest {
   }
 
   @Test
-  void detectsAndAnchorsCommunitiesForConnectedTables() {
+  void detectsAndAnchorsClustersForConnectedTables() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
     final Table orderItems = table("ORDER_ITEMS");

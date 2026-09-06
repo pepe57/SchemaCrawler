@@ -221,7 +221,7 @@ class ReportServiceTest {
   }
 
   @Test
-  void usesCommunitiesCachedOnTheSchemaGraphModel() {
+  void usesClustersCachedOnTheSchemaGraphModel() {
     final Table alpha = table("ALPHA");
     final DatabaseObjectNodeId alphaNode = node("ALPHA");
     final TableCluster cachedTableCluster =
