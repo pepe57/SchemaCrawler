@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.logging.Logger;
 import org.jgrapht.Graph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.schema.DatabaseObject;
@@ -65,8 +66,8 @@ final class EdgeFactory {
       LOGGER.warning(() -> "Skipping " + edgeType + " edge with a missing endpoint");
       return;
     }
-    final DatabaseObjectNodeId sourceNode = NodeIdFactory.create(source);
-    final DatabaseObjectNodeId targetNode = NodeIdFactory.create(target);
+    final DatabaseObjectNodeId sourceNode = DatabaseObjectNodeIdUtility.create(source);
+    final DatabaseObjectNodeId targetNode = DatabaseObjectNodeIdUtility.create(target);
     if (!graph.containsVertex(sourceNode) || !graph.containsVertex(targetNode)) {
       LOGGER.warning(
           () ->

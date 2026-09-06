@@ -6,17 +6,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.implementation;
+package schemacrawler.importance.model;
 
 import java.util.Objects;
-import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.utility.MetaDataUtility;
 import us.fatehi.utility.UtilityMarker;
 
 /** Creates stable graph identifiers for SchemaCrawler database objects. */
 @UtilityMarker
-public final class NodeIdFactory {
+public final class DatabaseObjectNodeIdUtility {
 
   public static DatabaseObjectNodeId create(final DatabaseObject databaseObject) {
     Objects.requireNonNull(databaseObject, "No database object provided");
@@ -24,7 +23,7 @@ public final class NodeIdFactory {
         databaseObject.key(), MetaDataUtility.getSimpleTypeName(databaseObject));
   }
 
-  private NodeIdFactory() {
+  private DatabaseObjectNodeIdUtility() {
     // Prevent instantiation
   }
 }

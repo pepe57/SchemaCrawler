@@ -18,6 +18,7 @@ import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.importance.model.SchemaCommunity;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
@@ -93,7 +94,7 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
   }
 
   private void addNode(final DatabaseObject databaseObject) {
-    final DatabaseObjectNodeId nodeId = NodeIdFactory.create(databaseObject);
+    final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(databaseObject);
     catalogGraph.addVertex(nodeId);
     nodeToObject.put(nodeId, databaseObject);
     if (nodeId.type() == SimpleDatabaseObjectType.table

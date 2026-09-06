@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Procedure;
 import schemacrawler.schema.Synonym;
@@ -25,8 +26,11 @@ class NodeIdFactoryTest {
     final Synonym synonym = mock(Synonym.class);
     when(synonym.key()).thenReturn(new NamedObjectKey("PUBLIC", "CUSTOMERS_ALIAS"));
 
-    assertThat(NodeIdFactory.create(view).type(), is(SimpleDatabaseObjectType.view));
-    assertThat(NodeIdFactory.create(procedure).type(), is(SimpleDatabaseObjectType.procedure));
-    assertThat(NodeIdFactory.create(synonym).type(), is(SimpleDatabaseObjectType.synonym));
+    assertThat(DatabaseObjectNodeIdUtility.create(view).type(), is(SimpleDatabaseObjectType.view));
+    assertThat(
+        DatabaseObjectNodeIdUtility.create(procedure).type(),
+        is(SimpleDatabaseObjectType.procedure));
+    assertThat(
+        DatabaseObjectNodeIdUtility.create(synonym).type(), is(SimpleDatabaseObjectType.synonym));
   }
 }

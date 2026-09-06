@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
@@ -209,8 +210,11 @@ class SchemaGraphModelBuilderTest {
             .filter(edge -> edge.getEdgeType() == EdgeType.SYNONYM_RESOLUTION)
             .findFirst()
             .orElseThrow();
-    assertThat(catalogGraph.getEdgeSource(foreignKeyEdge), is(NodeIdFactory.create(orders)));
-    assertThat(catalogGraph.getEdgeTarget(foreignKeyEdge), is(NodeIdFactory.create(customers)));
+    assertThat(
+        catalogGraph.getEdgeSource(foreignKeyEdge), is(DatabaseObjectNodeIdUtility.create(orders)));
+    assertThat(
+        catalogGraph.getEdgeTarget(foreignKeyEdge),
+        is(DatabaseObjectNodeIdUtility.create(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
     assertThat(schemaGraphModel.getTableNodes(), hasSize(3));
     assertThat(schemaGraphModel.getCommunities(), hasSize(1));
@@ -277,10 +281,14 @@ class SchemaGraphModelBuilderTest {
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
     assertThat(
-        schemaGraphModel.lookupByVertexNodeId(NodeIdFactory.create(table)).orElseThrow(),
+        schemaGraphModel
+            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(table))
+            .orElseThrow(),
         is(table));
     assertThat(
-        schemaGraphModel.lookupByVertexNodeId(NodeIdFactory.create(procedure)).orElseThrow(),
+        schemaGraphModel
+            .lookupByVertexNodeId(DatabaseObjectNodeIdUtility.create(procedure))
+            .orElseThrow(),
         is(procedure));
   }
 }
