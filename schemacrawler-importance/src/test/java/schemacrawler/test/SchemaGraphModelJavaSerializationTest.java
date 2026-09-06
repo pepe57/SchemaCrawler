@@ -33,8 +33,8 @@ import java.sql.Connection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.importance.utility.SerializedSchemaGraphModelUtility;
 import schemacrawler.schema.Catalog;
@@ -104,7 +104,7 @@ class SchemaGraphModelJavaSerializationTest {
     assertThat(deserializedSchemaGraphModel.getTableClusters(), hasSize(greaterThan(0)));
 
     final Table table = catalog.getTables().stream().findFirst().orElseThrow();
-    final DatabaseObjectVertexId tableVertexId = DatabaseObjectVertexIdUtility.create(table);
+    final DatabaseObjectVertexId tableVertexId = VertexUtility.createVertexId(table);
     assertThat(
         deserializedSchemaGraphModel.lookupTableByVertexId(tableVertexId).isPresent(), is(true));
     assertThat(

@@ -13,9 +13,9 @@ import static java.util.Objects.requireNonNull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.Table;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableImportanceUtility;
@@ -43,7 +43,7 @@ final class TableImportanceInputs {
   void putInputs(final Table table, final TableImportanceMetrics importanceMetrics) {
     requireNonNull(table, "No table provided");
     requireNonNull(importanceMetrics, "No table importance metrics provided");
-    final DatabaseObjectVertexId vertexId = DatabaseObjectVertexIdUtility.create(table);
+    final DatabaseObjectVertexId vertexId = VertexUtility.createVertexId(table);
     final TableTraits tableTraits = TableImportanceUtility.tableTraitsfrom(table);
     final TableCounts tableCounts = TableImportanceUtility.tableCountsfrom(table);
 

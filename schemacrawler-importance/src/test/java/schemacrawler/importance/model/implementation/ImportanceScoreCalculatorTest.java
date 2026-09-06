@@ -21,8 +21,8 @@ import static org.mockito.Mockito.spy;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.TableImportanceMetrics;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.Table;
 import schemacrawler.test.utility.crawl.LightPrimaryKey;
 import schemacrawler.test.utility.crawl.LightTable;
@@ -49,11 +49,9 @@ class ImportanceScoreCalculatorTest {
   @Test
   void connectedTableOutranksDisconnectedTable() {
     final Table connectedTable = table("AUTHORS");
-    final DatabaseObjectVertexId connectedNode =
-        DatabaseObjectVertexIdUtility.create(connectedTable);
+    final DatabaseObjectVertexId connectedNode = VertexUtility.createVertexId(connectedTable);
     final Table disconnectedTable = table("BOOKAUTHORS");
-    final DatabaseObjectVertexId disconnectedNode =
-        DatabaseObjectVertexIdUtility.create(disconnectedTable);
+    final DatabaseObjectVertexId disconnectedNode = VertexUtility.createVertexId(disconnectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, connectedTable, new TableImportanceMetrics(1, 1, 0.1, 1, 1), false, false);
@@ -67,10 +65,10 @@ class ImportanceScoreCalculatorTest {
   @Test
   void missingPrimaryKeyOrIndexesDampensWithoutZeroingOutTheScore() {
     final Table wellFormedTable = table("WELL_FORMED");
-    final DatabaseObjectVertexId wellFormed = DatabaseObjectVertexIdUtility.create(wellFormedTable);
+    final DatabaseObjectVertexId wellFormed = VertexUtility.createVertexId(wellFormedTable);
     final Table noPrimaryKeyOrIndexesTable = table("NO_PK_NO_INDEXES");
     final DatabaseObjectVertexId noPrimaryKeyOrIndexes =
-        DatabaseObjectVertexIdUtility.create(noPrimaryKeyOrIndexesTable);
+        VertexUtility.createVertexId(noPrimaryKeyOrIndexesTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, wellFormedTable, new TableImportanceMetrics(2, 2, 1.0, 2, 2), true, true);
@@ -92,7 +90,7 @@ class ImportanceScoreCalculatorTest {
   @Test
   void scoreIsAlwaysWithinZeroToOneHundred() {
     final Table table = table("MAXED_OUT");
-    final DatabaseObjectVertexId maxed = DatabaseObjectVertexIdUtility.create(table);
+    final DatabaseObjectVertexId maxed = VertexUtility.createVertexId(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(100, 100, 1000.0, 500, 500), true, true);
 
@@ -105,7 +103,7 @@ class ImportanceScoreCalculatorTest {
   @Test
   void scoreIsDeterministicAndReproducibleForTheSameInputs() {
     final Table table = table("ORDERS");
-    final DatabaseObjectVertexId node = DatabaseObjectVertexIdUtility.create(table);
+    final DatabaseObjectVertexId node = VertexUtility.createVertexId(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(3, 4, 2.5, 5, 6), true, true);
 
@@ -118,10 +116,9 @@ class ImportanceScoreCalculatorTest {
   @Test
   void wellConnectedTableOutranksPoorlyConnectedTable() {
     final Table smallTable = table("SMALL_LOOKUP");
-    final DatabaseObjectVertexId smallNode = DatabaseObjectVertexIdUtility.create(smallTable);
+    final DatabaseObjectVertexId smallNode = VertexUtility.createVertexId(smallTable);
     final Table connectedTable = table("BOOKAUTHORS");
-    final DatabaseObjectVertexId connectedNode =
-        DatabaseObjectVertexIdUtility.create(connectedTable);
+    final DatabaseObjectVertexId connectedNode = VertexUtility.createVertexId(connectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, smallTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
@@ -135,7 +132,7 @@ class ImportanceScoreCalculatorTest {
   @Test
   void zeroGraphSignalsProduceAValidScore() {
     final Table table = table("ONLY_TABLE");
-    final DatabaseObjectVertexId onlyTable = DatabaseObjectVertexIdUtility.create(table);
+    final DatabaseObjectVertexId onlyTable = VertexUtility.createVertexId(table);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
     put(inputs, table, new TableImportanceMetrics(0, 0, 0.0, 0, 0), true, true);

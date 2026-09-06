@@ -20,11 +20,11 @@ import java.util.List;
 import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableImportance;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.ForeignKey;
 import schemacrawler.schema.NamedObjectKey;
@@ -163,11 +163,9 @@ class SchemaGraphModelBuilderTest {
             .findFirst()
             .orElseThrow();
     assertThat(
-        catalogGraph.getEdgeSource(foreignKeyEdge),
-        is(DatabaseObjectVertexIdUtility.create(orders)));
+        catalogGraph.getEdgeSource(foreignKeyEdge), is(VertexUtility.createVertexId(orders)));
     assertThat(
-        catalogGraph.getEdgeTarget(foreignKeyEdge),
-        is(DatabaseObjectVertexIdUtility.create(customers)));
+        catalogGraph.getEdgeTarget(foreignKeyEdge), is(VertexUtility.createVertexId(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
     assertThat(schemaGraphModel.getTableVertexIds(), hasSize(3));
     assertThat(schemaGraphModel.getTableClusters(), hasSize(1));
@@ -211,14 +209,10 @@ class SchemaGraphModelBuilderTest {
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
     assertThat(
-        schemaGraphModel
-            .lookupByVertexId(DatabaseObjectVertexIdUtility.create(table))
-            .orElseThrow(),
+        schemaGraphModel.lookupByVertexId(VertexUtility.createVertexId(table)).orElseThrow(),
         is(table));
     assertThat(
-        schemaGraphModel
-            .lookupByVertexId(DatabaseObjectVertexIdUtility.create(procedure))
-            .orElseThrow(),
+        schemaGraphModel.lookupByVertexId(VertexUtility.createVertexId(procedure)).orElseThrow(),
         is(procedure));
   }
 

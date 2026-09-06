@@ -17,8 +17,8 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.DatabaseObjectVertexIdUtility;
 import schemacrawler.importance.model.SchemaEdge;
+import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
@@ -39,8 +39,8 @@ final class SchemaGraphAssembly {
     if (source == null || target == null) {
       return false;
     }
-    final DatabaseObjectVertexId sourceVertexId = DatabaseObjectVertexIdUtility.create(source);
-    final DatabaseObjectVertexId targetVertexId = DatabaseObjectVertexIdUtility.create(target);
+    final DatabaseObjectVertexId sourceVertexId = VertexUtility.createVertexId(source);
+    final DatabaseObjectVertexId targetVertexId = VertexUtility.createVertexId(target);
     if (!catalogGraph.containsVertex(sourceVertexId)
         || !catalogGraph.containsVertex(targetVertexId)) {
       return false;
@@ -51,7 +51,7 @@ final class SchemaGraphAssembly {
 
   void addNode(final DatabaseObject databaseObject) {
     requireNonNull(databaseObject, "No database object provided");
-    final DatabaseObjectVertexId vertexId = DatabaseObjectVertexIdUtility.create(databaseObject);
+    final DatabaseObjectVertexId vertexId = VertexUtility.createVertexId(databaseObject);
     catalogGraph.addVertex(vertexId);
     objectsByVertexId.put(vertexId, databaseObject);
     if (databaseObject instanceof final Table table) {
