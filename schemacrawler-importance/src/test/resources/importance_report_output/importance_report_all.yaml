@@ -1,9 +1,9 @@
-communities:
-  - id: a61b0ea7-c688-3e35-ab3b-b7593f7fd788
+clusters:
+  - id: 922a04f8-d6c0-306d-b534-e059ddd68910
     anchor_node_id:
       type: table
     anchor_table_full_name: PUBLIC.BOOKS.BOOKS
-    total_community_size: 4
+    total_cluster_size: 4
     member_node_ids:
       - type: table
       - type: table
@@ -14,11 +14,11 @@ communities:
       - PUBLIC."PUBLISHER SALES".SALES
       - PUBLIC."PUBLISHER SALES".REGIONS
       - PUBLIC."PUBLISHER SALES".SALESDATA
-  - id: 4d99692f-a647-393e-b7a9-68ad59737a2e
+  - id: 6befb0bf-08a8-3739-b5a5-e6a295eed685
     anchor_node_id:
       type: table
     anchor_table_full_name: PUBLIC.FOR_LINT.WRITERS
-    total_community_size: 4
+    total_cluster_size: 4
     member_node_ids:
       - type: table
       - type: table

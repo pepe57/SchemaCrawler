@@ -28,13 +28,13 @@ import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.Table;
 import us.fatehi.utility.UtilityMarker;
 
-/** Detects functional domain communities over schema graph table and view nodes. */
+/** Detects table clusters over schema graph. */
 @UtilityMarker
-final class CommunityDetector {
+final class TableClusterDetector {
 
   private static final int MIN_CLUSTER_SIZE = 3;
 
-  static List<TableCluster> detectCommunities(
+  static List<TableCluster> detectClusters(
       final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
       final Map<DatabaseObjectNodeId, Table> tablesByNode) {
     requireNonNull(tableSubgraph, "No table graph provided");
@@ -60,9 +60,9 @@ final class CommunityDetector {
             .thenComparing(nodeId -> getTableFullName(nodeId, tablesByNode)));
     final DatabaseObjectNodeId anchorNode = sortedMembers.get(0);
     final String anchorFullName = getTableFullName(anchorNode, tablesByNode);
-    final UUID communityId =
-        UUID.nameUUIDFromBytes(("community:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
-    return new TableCluster(communityId, anchorNode, sortedMembers);
+    final UUID clusterId =
+        UUID.nameUUIDFromBytes(("cluster:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
+    return new TableCluster(clusterId, anchorNode, sortedMembers);
   }
 
   private static List<TableCluster> createTableClusters(
@@ -114,7 +114,7 @@ final class CommunityDetector {
     return List.copyOf(sortedTableClusters);
   }
 
-  private CommunityDetector() {
+  private TableClusterDetector() {
     // Prevent instantiation
   }
 }

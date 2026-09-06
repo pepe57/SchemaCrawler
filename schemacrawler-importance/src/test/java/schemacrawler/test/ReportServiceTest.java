@@ -59,7 +59,7 @@ class ReportServiceTest {
     assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
     assertThat(report.tables().get(0).nodeId(), is(betaNode));
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
-    assertThat(report.communities(), empty());
+    assertThat(report.clusters(), empty());
   }
 
   @Test
@@ -154,8 +154,8 @@ class ReportServiceTest {
 
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
 
-    assertThat(report.communities(), hasSize(1));
-    assertThat(report.communities().get(0).id(), is(cachedTableCluster.id()));
+    assertThat(report.clusters(), hasSize(1));
+    assertThat(report.clusters().get(0).id(), is(cachedTableCluster.id()));
   }
 
   @Test
@@ -178,12 +178,12 @@ class ReportServiceTest {
     final ImportanceOptions options =
         ImportanceOptionsBuilder.builder()
             .withTableInclusionRule(new RegularExpressionRule(".*", ""))
-            .withMaxCommunities(1)
+            .withMaxClusters(1)
             .toOptions();
     final var report = new ImportanceReportGenerator(schemaGraphModel).report(options);
 
-    assertThat(report.communities(), hasSize(1));
-    assertThat(report.communities().get(0).id(), is(firstCluster.id()));
+    assertThat(report.clusters(), hasSize(1));
+    assertThat(report.clusters().get(0).id(), is(firstCluster.id()));
   }
 
   private static ImportanceReportEntry entry(

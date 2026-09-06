@@ -20,17 +20,17 @@ public final class ImportanceOptionsBuilder
     extends BaseTextOptionsBuilder<ImportanceOptionsBuilder, ImportanceOptions> {
 
   private static final int MAX_COUNT = 5;
+  private static final String PROPERTY_PREFIX = "schemacrawler.importance.";
 
   private static final String TABLE_FILTER = "table-filter";
-  private static final String TABLE_FILTER_PROPERTY = "schemacrawler.importance.table-filter";
-  private static final String MAX_COMMUNITIES = "max-communities";
-  private static final String MAX_COMMUNITIES_PROPERTY = "schemacrawler.importance.max-communities";
-  private static final String MAX_COMMUNITY_SIZE = "max-community-size";
-  private static final String MAX_COMMUNITY_SIZE_PROPERTY =
-      "schemacrawler.importance.max-community-size";
+  private static final String TABLE_FILTER_PROPERTY = PROPERTY_PREFIX + "table-filter";
+  private static final String MAX_CLUSTERS = "max-clusters";
+  private static final String MAX_CLUSTERS_PROPERTY = PROPERTY_PREFIX + MAX_CLUSTERS;
+  private static final String MAX_CLUSTER_SIZE = "max-cluster-size";
+  private static final String MAX_CLUSTER_SIZE_PROPERTY = PROPERTY_PREFIX + MAX_CLUSTER_SIZE;
   private static final String MAX_IMPORTANT_TABLES = "max-important-tables";
   private static final String MAX_IMPORTANT_TABLES_PROPERTY =
-      "schemacrawler.importance.max-important-tables";
+      PROPERTY_PREFIX + MAX_IMPORTANT_TABLES;
 
   public static ImportanceOptionsBuilder builder() {
     return new ImportanceOptionsBuilder();
@@ -43,16 +43,16 @@ public final class ImportanceOptionsBuilder
   }
 
   InclusionRule tableInclusionRule;
-  int maxCommunities;
-  int maxCommunitySize;
+  int maxClusters;
+  int maxClusterSize;
 
   int maxImportantTables;
 
   private ImportanceOptionsBuilder() {
     tableInclusionRule = new IncludeAll();
     maxImportantTables = MAX_COUNT;
-    maxCommunities = MAX_COUNT;
-    maxCommunitySize = MAX_COUNT;
+    maxClusters = MAX_COUNT;
+    maxClusterSize = MAX_COUNT;
   }
 
   @Override
@@ -67,8 +67,8 @@ public final class ImportanceOptionsBuilder
       tableInclusionRule = new RegularExpressionRule(filter, "");
     }
     maxImportantTables = getLimit(config, MAX_IMPORTANT_TABLES, MAX_IMPORTANT_TABLES_PROPERTY);
-    maxCommunities = getLimit(config, MAX_COMMUNITIES, MAX_COMMUNITIES_PROPERTY);
-    maxCommunitySize = getLimit(config, MAX_COMMUNITY_SIZE, MAX_COMMUNITY_SIZE_PROPERTY);
+    maxClusters = getLimit(config, MAX_CLUSTERS, MAX_CLUSTERS_PROPERTY);
+    maxClusterSize = getLimit(config, MAX_CLUSTER_SIZE, MAX_CLUSTER_SIZE_PROPERTY);
     return this;
   }
 
@@ -78,8 +78,8 @@ public final class ImportanceOptionsBuilder
       super.fromOptions(options);
       tableInclusionRule = options.getTableInclusionRule();
       maxImportantTables = options.getMaxImportantTables();
-      maxCommunities = options.getMaxCommunities();
-      maxCommunitySize = options.getMaxCommunitySize();
+      maxClusters = options.getMaxClusters();
+      maxClusterSize = options.getMaxClusterSize();
     }
     return this;
   }
@@ -89,13 +89,13 @@ public final class ImportanceOptionsBuilder
     return new ImportanceOptions(this);
   }
 
-  public ImportanceOptionsBuilder withMaxCommunities(final int maxCommunities) {
-    this.maxCommunities = maxCommunities;
+  public ImportanceOptionsBuilder withMaxClusters(final int maxClusters) {
+    this.maxClusters = maxClusters;
     return this;
   }
 
-  public ImportanceOptionsBuilder withMaxCommunitySize(final int maxCommunitySize) {
-    this.maxCommunitySize = maxCommunitySize;
+  public ImportanceOptionsBuilder withMaxClusterSize(final int maxClusterSize) {
+    this.maxClusterSize = maxClusterSize;
     return this;
   }
 

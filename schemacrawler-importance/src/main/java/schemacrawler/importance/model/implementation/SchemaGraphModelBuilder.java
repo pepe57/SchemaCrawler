@@ -91,11 +91,11 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
       inputs.store(entry.getKey(), entry.getValue());
     }
 
-    // Community affinity is direction-independent, unlike schema dependencies
+    // Table cluster affinity is direction-independent, unlike schema dependencies
     final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
         new AsUndirectedGraph<>(assembly.tableSubgraph());
     final List<TableCluster> tableClusters =
-        CommunityDetector.detectCommunities(tableSubgraph, assembly.tablesByNode());
+        TableClusterDetector.detectClusters(tableSubgraph, assembly.tablesByNode());
 
     return new ImmutableSchemaGraphModel(
         assembly.catalogGraph(), assembly.tableNodes(), assembly.nodeToObject(), tableClusters);

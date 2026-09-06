@@ -51,19 +51,19 @@ public final class ImportanceReportGenerator {
     final InclusionRule tableInclusionRule = options.getTableInclusionRule();
     final List<ImportanceReportEntry> tables =
         reportTables(tableInclusionRule, options.getMaxImportantTables());
-    final List<CommunityReportEntry> tableClusters =
+    final List<ClusterReportEntry> tableClusters =
         limit(
-            reportTableClusters(tableInclusionRule, options.getMaxCommunitySize()),
-            options.getMaxCommunities());
+            reportTableClusters(tableInclusionRule, options.getMaxClusterSize()),
+            options.getMaxClusters());
 
     return new ImportanceReport(tableClusters, tables);
   }
 
-  private List<CommunityReportEntry> reportTableClusters(
-      final InclusionRule tableInclusionRule, final int maxCommunitySize) {
+  private List<ClusterReportEntry> reportTableClusters(
+      final InclusionRule tableInclusionRule, final int maxClusterSize) {
     final List<TableCluster> tableClusters = schemaGraphModel.getTableClusters();
 
-    final List<CommunityReportEntry> entries = new ArrayList<>();
+    final List<ClusterReportEntry> entries = new ArrayList<>();
     for (final TableCluster tableCluster : tableClusters) {
       final Table anchorTable =
           schemaGraphModel.lookupTableByVertexNodeId(tableCluster.anchorNode()).orElse(null);
@@ -94,16 +94,16 @@ public final class ImportanceReportGenerator {
       final List<DatabaseObjectNodeId> truncatedMembers;
       final List<String> truncatedFullNames;
 
-      if (maxCommunitySize > 0 && totalSize > maxCommunitySize) {
-        truncatedMembers = allMembers.subList(0, maxCommunitySize);
-        truncatedFullNames = allFullNames.subList(0, maxCommunitySize);
+      if (maxClusterSize > 0 && totalSize > maxClusterSize) {
+        truncatedMembers = allMembers.subList(0, maxClusterSize);
+        truncatedFullNames = allFullNames.subList(0, maxClusterSize);
       } else {
         truncatedMembers = allMembers;
         truncatedFullNames = allFullNames;
       }
 
       entries.add(
-          new CommunityReportEntry(
+          new ClusterReportEntry(
               tableCluster.id(),
               tableCluster.anchorNode(),
               anchorFullName,

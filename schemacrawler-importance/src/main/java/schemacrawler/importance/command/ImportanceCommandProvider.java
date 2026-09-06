@@ -39,13 +39,13 @@ public final class ImportanceCommandProvider extends AbstractSchemaCrawlerComman
             Integer.class,
             "Maximum number of important tables to include in the report (default 5; -1 for all)")
         .addOption(
-            "max-communities",
+            "max-clusters",
             Integer.class,
-            "Maximum number of communities to include in the report (default 5; -1 for all)")
+            "Maximum number of table clusters to include in the report (default 5; -1 for all)")
         .addOption(
-            "max-community-size",
+            "max-clusters-size",
             Integer.class,
-            "Maximum members per community to include in the report (default 5; -1 for all)");
+            "Maximum members per table clusters to include in the report (default 5; -1 for all)");
   }
 
   @Override

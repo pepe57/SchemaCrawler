@@ -15,25 +15,25 @@ import java.util.List;
 import java.util.UUID;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 
-/** One detected domain community entry in an importance report. */
-public record CommunityReportEntry(
+/** One detected table cluster entry in an importance report. */
+public record ClusterReportEntry(
     UUID id,
     DatabaseObjectNodeId anchorNodeId,
     String anchorTableFullName,
-    int totalCommunitySize,
+    int totalClusterSize,
     List<DatabaseObjectNodeId> memberNodeIds,
     List<String> memberTableFullNames) {
 
-  public CommunityReportEntry {
-    requireNonNull(id, "No community id provided");
+  public ClusterReportEntry {
+    requireNonNull(id, "No table cluster id provided");
     requireNonNull(anchorNodeId, "No anchor node id provided");
     requireNotBlank(anchorTableFullName, "No anchor table full name provided");
     requireNonNull(memberNodeIds, "No member node ids provided");
     requireNonNull(memberTableFullNames, "No member table full names provided");
     memberNodeIds = List.copyOf(memberNodeIds);
     memberTableFullNames = List.copyOf(memberTableFullNames);
-    if (totalCommunitySize < 0) {
-      throw new IllegalArgumentException("Total community size cannot be negative");
+    if (totalClusterSize < 0) {
+      throw new IllegalArgumentException("Total table cluster size cannot be negative");
     }
   }
 }

@@ -18,15 +18,15 @@ import java.util.UUID;
  * A detected cluster of database tables in the schema graph.
  *
  * @param id synthetic unique identifier for the cluster
- * @param anchorNode node with the highest importance score in the community
- * @param memberNodes all member table and view nodes in the community
+ * @param anchorNode node with the highest importance score in the table cluster
+ * @param memberNodes all member table and view nodes in the table cluster
  */
 public record TableCluster(
     UUID id, DatabaseObjectNodeId anchorNode, List<DatabaseObjectNodeId> memberNodes)
     implements Serializable {
 
   public TableCluster {
-    requireNonNull(id, "No community id provided");
+    requireNonNull(id, "No table cluster id provided");
     requireNonNull(anchorNode, "No anchor node provided");
     requireNonNull(memberNodes, "No member nodes provided");
     memberNodes = List.copyOf(memberNodes);
