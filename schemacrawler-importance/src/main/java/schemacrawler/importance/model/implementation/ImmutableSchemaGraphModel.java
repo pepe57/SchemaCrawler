@@ -26,7 +26,7 @@ import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
-final class SchemaGraphModelImpl implements SchemaGraphModel {
+final class ImmutableSchemaGraphModel implements SchemaGraphModel {
 
   @Serial private static final long serialVersionUID = -2772896374981270459L;
 
@@ -35,7 +35,7 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
   private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
   private final Set<DatabaseObjectNodeId> tableNodes;
 
-  SchemaGraphModelImpl(
+  ImmutableSchemaGraphModel(
       final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
       final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject,

@@ -90,7 +90,7 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     storeTableImportance(inputs, importanceScores);
     final List<TableCluster> tableClusters =
         CommunityDetector.detectCommunities(catalogGraph, tableNodes, nodeToObject);
-    return new SchemaGraphModelImpl(catalogGraph, tableNodes, nodeToObject, tableClusters);
+    return new ImmutableSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
   }
 
   private void addNode(final DatabaseObject databaseObject) {
