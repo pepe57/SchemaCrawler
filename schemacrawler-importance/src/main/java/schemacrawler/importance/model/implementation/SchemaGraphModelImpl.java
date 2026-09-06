@@ -56,23 +56,26 @@ final class SchemaGraphModelImpl implements SchemaGraphModel {
   }
 
   @Override
+  public Set<DatabaseObjectNodeId> getTableNodes() {
+    return tableNodes;
+  }
+
+  @Override
   public Optional<DatabaseObject> lookupByVertexNodeId(final DatabaseObjectNodeId vertexNodeId) {
+    if (vertexNodeId == null) {
+      return Optional.empty();
+    }
     return Optional.ofNullable(nodeToObject.get(vertexNodeId));
   }
 
   @Override
-  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
-    if (!tableNodes.contains(tableNodeId)) {
-      return Optional.empty();
-    }
-    return lookupByVertexNodeId(tableNodeId)
-        .filter(Table.class::isInstance)
-        .map(Table.class::cast)
-        .map(table -> table.<TableImportance>getAttribute(TableImportance.class.getName()));
+  public Optional<Table> lookupTableByVertexNodeId(final DatabaseObjectNodeId tableNodeId) {
+    return lookupByVertexNodeId(tableNodeId).filter(Table.class::isInstance).map(Table.class::cast);
   }
 
   @Override
-  public Set<DatabaseObjectNodeId> getTableNodes() {
-    return tableNodes;
+  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
+    return lookupTableByVertexNodeId(tableNodeId)
+        .flatMap(table -> table.getAttribute(TableImportance.class.getName()));
   }
 }

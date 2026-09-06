@@ -20,6 +20,7 @@ import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
+import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 public final class LightSchemaGraphModel implements SchemaGraphModel {
 
@@ -50,23 +51,33 @@ public final class LightSchemaGraphModel implements SchemaGraphModel {
   }
 
   @Override
+  public Set<DatabaseObjectNodeId> getTableNodes() {
+    return tableNodes;
+  }
+
+  @Override
   public Optional<DatabaseObject> lookupByVertexNodeId(final DatabaseObjectNodeId vertexNodeId) {
+    if (vertexNodeId == null || !nodeToObject.containsKey(vertexNodeId)) {
+      return Optional.empty();
+    }
     return Optional.ofNullable(nodeToObject.get(vertexNodeId));
   }
 
   @Override
-  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
-    if (!tableNodes.contains(tableNodeId)) {
+  public Optional<Table> lookupTableByVertexNodeId(final DatabaseObjectNodeId tableNodeId) {
+    if (tableNodeId == null || tableNodeId.type() != SimpleDatabaseObjectType.table) {
       return Optional.empty();
     }
-    return lookupByVertexNodeId(tableNodeId)
-        .filter(Table.class::isInstance)
-        .map(Table.class::cast)
-        .map(table -> table.<TableImportance>getAttribute(TableImportance.class.getName()));
+    return lookupByVertexNodeId(tableNodeId).filter(Table.class::isInstance).map(Table.class::cast);
   }
 
   @Override
-  public Set<DatabaseObjectNodeId> getTableNodes() {
-    return tableNodes;
+  public Optional<TableImportance> lookupTableImportance(final DatabaseObjectNodeId tableNodeId) {
+    final Optional<Table> optionalTableByVertexNodeId = lookupTableByVertexNodeId(tableNodeId);
+    if (optionalTableByVertexNodeId.isEmpty()) {
+      return Optional.empty();
+    }
+    final Table table = optionalTableByVertexNodeId.get();
+    return table.getAttribute(TableImportance.class.getName());
   }
 }
