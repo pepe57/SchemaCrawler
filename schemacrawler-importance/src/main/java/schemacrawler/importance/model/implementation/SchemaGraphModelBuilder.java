@@ -14,7 +14,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.AsUndirectedGraph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportanceMetrics;
@@ -88,9 +91,12 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
       inputs.store(entry.getKey(), entry.getValue());
     }
 
+    // Community affinity is direction-independent, unlike schema dependencies
+    final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
+        new AsUndirectedGraph<>(assembly.tableSubgraph());
     final List<TableCluster> tableClusters =
-        CommunityDetector.detectCommunities(
-            assembly.catalogGraph(), assembly.tableNodes(), assembly.tablesByNode());
+        CommunityDetector.detectCommunities(tableSubgraph, assembly.tablesByNode());
+
     return new ImmutableSchemaGraphModel(
         assembly.catalogGraph(), assembly.tableNodes(), assembly.nodeToObject(), tableClusters);
   }

@@ -13,7 +13,6 @@ import static java.util.Objects.requireNonNull;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -22,8 +21,6 @@ import java.util.UUID;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.clustering.LabelPropagationClustering;
 import org.jgrapht.alg.interfaces.ClusteringAlgorithm;
-import org.jgrapht.graph.AsSubgraph;
-import org.jgrapht.graph.AsUndirectedGraph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.TableCluster;
@@ -38,18 +35,15 @@ final class CommunityDetector {
   private static final int MIN_CLUSTER_SIZE = 3;
 
   static List<TableCluster> detectCommunities(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph,
-      final Set<DatabaseObjectNodeId> tableNodes,
+      final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
       final Map<DatabaseObjectNodeId, Table> tablesByNode) {
-    requireNonNull(fullGraph, "No full graph provided");
-    requireNonNull(tableNodes, "No table and view nodes provided");
+    requireNonNull(tableSubgraph, "No table graph provided");
     requireNonNull(tablesByNode, "No table-node map provided");
-    if (tableNodes.isEmpty()) {
+
+    if (tableSubgraph.vertexSet().isEmpty()) {
       return List.of();
     }
 
-    final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
-        tableSubgraph(fullGraph, tableNodes);
     final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, tablesByNode);
     return sortTableClusters(tableClusters, tablesByNode);
   }
@@ -118,21 +112,6 @@ final class CommunityDetector {
             .thenComparing(
                 tableCluster -> getTableFullName(tableCluster.anchorNode(), tablesByNode)));
     return List.copyOf(sortedTableClusters);
-  }
-
-  private static Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph(
-      final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph,
-      final Set<DatabaseObjectNodeId> tableNodes) {
-    final Set<SchemaEdge> tableEdges = new LinkedHashSet<>();
-    for (final SchemaEdge edge : fullGraph.edgeSet()) {
-      final DatabaseObjectNodeId source = fullGraph.getEdgeSource(edge);
-      final DatabaseObjectNodeId target = fullGraph.getEdgeTarget(edge);
-      if (tableNodes.contains(source) && tableNodes.contains(target)) {
-        tableEdges.add(edge);
-      }
-    }
-    // Community affinity is direction-independent, unlike schema dependencies.
-    return new AsUndirectedGraph<>(new AsSubgraph<>(fullGraph, tableNodes, tableEdges));
   }
 
   private CommunityDetector() {
