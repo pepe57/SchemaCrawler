@@ -91,6 +91,85 @@ class PathServiceTest {
     assertThat(pathService.findShortestPath(orders, countries).path(), contains(orders, countries));
   }
 
+  @Test
+  void allowsUnlimitedPathDepth() {
+    final DatabaseObjectNodeId table1 = table("TABLE1");
+    final DatabaseObjectNodeId table2 = table("TABLE2");
+    final DatabaseObjectNodeId table3 = table("TABLE3");
+    final DatabaseObjectNodeId table4 = table("TABLE4");
+    final DatabaseObjectNodeId table5 = table("TABLE5");
+    final DatabaseObjectNodeId table6 = table("TABLE6");
+    final DatabaseObjectNodeId table7 = table("TABLE7");
+    final PathService pathService =
+        pathService(
+            List.of(table1, table2, table3, table4, table5, table6, table7),
+            edge(table1, table2, EdgeType.FOREIGN_KEY),
+            edge(table2, table3, EdgeType.FOREIGN_KEY),
+            edge(table3, table4, EdgeType.FOREIGN_KEY),
+            edge(table4, table5, EdgeType.FOREIGN_KEY),
+            edge(table5, table6, EdgeType.FOREIGN_KEY),
+            edge(table6, table7, EdgeType.FOREIGN_KEY));
+
+    assertThat(
+        pathService.findShortestPath(table1, table7, -1).path(),
+        contains(table1, table2, table3, table4, table5, table6, table7));
+  }
+
+  @Test
+  void cachesTablePathTopology() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+        new DirectedPseudograph<>(SchemaEdge.class);
+    graph.addVertex(orders);
+    graph.addVertex(customers);
+    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+        Map.of(
+            orders,
+            new LightTable(orders.key().toString()),
+            customers,
+            new LightTable(customers.key().toString()));
+    final PathService pathService =
+        new PathService(
+            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
+
+    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
+
+    assertThat(pathService.findShortestPath(orders, customers).path(), empty());
+  }
+
+  @Test
+  void cachesOnlyEligibleTableEdges() {
+    final DatabaseObjectNodeId orders = table("ORDERS");
+    final DatabaseObjectNodeId customers = table("CUSTOMERS");
+    final DatabaseObjectNodeId procedure =
+        new DatabaseObjectNodeId(
+            new NamedObjectKey("PUBLIC", "REFRESH_ORDERS"), SimpleDatabaseObjectType.procedure);
+    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
+        new DirectedPseudograph<>(SchemaEdge.class);
+    graph.addVertex(orders);
+    graph.addVertex(customers);
+    graph.addVertex(procedure);
+    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
+    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
+    graph.addEdge(orders, customers, edge(orders, customers, EdgeType.IMPLICIT_ASSOCIATION).edge());
+    graph.addEdge(procedure, customers, edge(procedure, customers, EdgeType.FOREIGN_KEY).edge());
+    final Map<DatabaseObjectNodeId, LightTable> nodeToTable =
+        Map.of(
+            orders,
+            new LightTable(orders.key().toString()),
+            customers,
+            new LightTable(customers.key().toString()));
+    final PathService pathService =
+        new PathService(
+            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
+
+    assertThat(
+        pathService.findShortestPath(orders, customers).usesImpliedAssociations(), is(false));
+    assertThrows(
+        IllegalArgumentException.class, () -> pathService.findShortestPath(procedure, customers));
+  }
+
   private static Edge edge(
       final DatabaseObjectNodeId source,
       final DatabaseObjectNodeId target,

@@ -13,11 +13,11 @@ import static java.util.Objects.requireNonNull;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.AsSubgraph;
+import org.jgrapht.graph.AsUnmodifiableGraph;
+import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.EdgeType;
 import schemacrawler.importance.model.SchemaEdge;
@@ -28,10 +28,21 @@ public final class PathService {
 
   public static final int DEFAULT_MAX_PATH_DEPTH = 5;
 
-  private final SchemaGraphModel schemaGraphModel;
+  private final Graph<DatabaseObjectNodeId, SchemaEdge> fallbackGraph;
+  private final Graph<DatabaseObjectNodeId, SchemaEdge> foreignKeyGraph;
+  private final Set<DatabaseObjectNodeId> tableNodes;
 
   public PathService(final SchemaGraphModel schemaGraphModel) {
-    this.schemaGraphModel = requireNonNull(schemaGraphModel, "No schema graph model provided");
+    requireNonNull(schemaGraphModel, "No schema graph model provided");
+    tableNodes = Set.copyOf(schemaGraphModel.getTableNodes());
+    final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();
+    foreignKeyGraph = pathGraph(catalogGraph, edge -> edge.getEdgeType() == EdgeType.FOREIGN_KEY);
+    fallbackGraph =
+        pathGraph(
+            catalogGraph,
+            edge ->
+                edge.getEdgeType() == EdgeType.FOREIGN_KEY
+                    || edge.getEdgeType() == EdgeType.IMPLICIT_ASSOCIATION);
   }
 
   public PathResult findShortestPath(
@@ -52,45 +63,49 @@ public final class PathService {
     }
 
     final GraphPath<DatabaseObjectNodeId, SchemaEdge> foreignKeyPath =
-        findPath(from, to, edge -> edge.getEdgeType() == EdgeType.FOREIGN_KEY, maxPathDepth);
+        findPath(foreignKeyGraph, from, to, maxPathDepth);
     if (foreignKeyPath != null) {
       return new PathResult(foreignKeyPath.getVertexList(), false);
     }
 
     final GraphPath<DatabaseObjectNodeId, SchemaEdge> fallbackPath =
-        findPath(
-            from,
-            to,
-            edge ->
-                edge.getEdgeType() == EdgeType.FOREIGN_KEY
-                    || edge.getEdgeType() == EdgeType.IMPLICIT_ASSOCIATION,
-            maxPathDepth);
+        findPath(fallbackGraph, from, to, maxPathDepth);
     return fallbackPath == null
         ? new PathResult(List.of(), false)
         : new PathResult(fallbackPath.getVertexList(), true);
   }
 
   private GraphPath<DatabaseObjectNodeId, SchemaEdge> findPath(
+      final Graph<DatabaseObjectNodeId, SchemaEdge> graph,
       final DatabaseObjectNodeId from,
       final DatabaseObjectNodeId to,
-      final Predicate<SchemaEdge> edgeFilter,
       final int maxPathDepth) {
-    final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph = schemaGraphModel.getCatalogGraph();
-    final Set<SchemaEdge> edges =
-        catalogGraph.edgeSet().stream().filter(edgeFilter).collect(Collectors.toSet());
-    final Graph<DatabaseObjectNodeId, SchemaEdge> graph =
-        new AsSubgraph<>(catalogGraph, schemaGraphModel.getTableNodes(), edges);
-    if (!graph.containsVertex(from) || !graph.containsVertex(to)) {
-      return null;
-    }
     final GraphPath<DatabaseObjectNodeId, SchemaEdge> path =
         new DijkstraShortestPath<>(graph).getPath(from, to);
     return path != null && maxPathDepth > 0 && path.getLength() > maxPathDepth ? null : path;
   }
 
+  private Graph<DatabaseObjectNodeId, SchemaEdge> pathGraph(
+      final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph,
+      final Predicate<SchemaEdge> includeEdge) {
+    final Graph<DatabaseObjectNodeId, SchemaEdge> pathGraph =
+        new DirectedPseudograph<>(SchemaEdge.class);
+    for (final DatabaseObjectNodeId tableNode : tableNodes) {
+      pathGraph.addVertex(tableNode);
+    }
+    for (final SchemaEdge edge : catalogGraph.edgeSet()) {
+      final DatabaseObjectNodeId source = catalogGraph.getEdgeSource(edge);
+      final DatabaseObjectNodeId target = catalogGraph.getEdgeTarget(edge);
+      if (tableNodes.contains(source) && tableNodes.contains(target) && includeEdge.test(edge)) {
+        pathGraph.addEdge(source, target, edge);
+      }
+    }
+    return new AsUnmodifiableGraph<>(pathGraph);
+  }
+
   private void requireTable(final DatabaseObjectNodeId nodeId, final String role) {
     requireNonNull(nodeId, "No %s node provided".formatted(role));
-    if (schemaGraphModel.lookupTableByVertexNodeId(nodeId).isEmpty()) {
+    if (!tableNodes.contains(nodeId)) {
       throw new IllegalArgumentException(
           "<%s> node must identify a %s table in the graph".formatted(nodeId, role));
     }
