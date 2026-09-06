@@ -20,7 +20,7 @@ import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.path.PathFinder;
 import schemacrawler.importance.path.PathResult;
 import schemacrawler.schema.NamedObjectKey;
-import schemacrawler.test.utility.LightSchemaGraphModel;
+import schemacrawler.test.utility.LightImportanceModel;
 import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
@@ -47,7 +47,7 @@ class PathFinderTest {
     final Set<DatabaseObjectVertexId> tableVertexIds = Set.copyOf(nodes);
     final Map<DatabaseObjectVertexId, LightTable> nodeToTable =
         nodes.stream().collect(toMap(identity(), node -> new LightTable(node.key().toString())));
-    return new PathFinder(new LightSchemaGraphModel(graph, tableVertexIds, nodeToTable, List.of()));
+    return new PathFinder(new LightImportanceModel(graph, tableVertexIds, nodeToTable, List.of()));
   }
 
   private static DatabaseObjectVertexId table(final String name) {
@@ -103,7 +103,7 @@ class PathFinderTest {
             new LightTable(customers.key().toString()));
     final PathFinder pathFinder =
         new PathFinder(
-            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
+            new LightImportanceModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
 
     assertThat(pathFinder.findShortestPath(orders, customers).usesImpliedAssociations(), is(false));
     assertThrows(
@@ -126,7 +126,7 @@ class PathFinderTest {
             new LightTable(customers.key().toString()));
     final PathFinder pathFinder =
         new PathFinder(
-            new LightSchemaGraphModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
+            new LightImportanceModel(graph, Set.of(orders, customers), nodeToTable, List.of()));
 
     graph.addEdge(orders, customers, edge(orders, customers, EdgeType.FOREIGN_KEY).edge());
 

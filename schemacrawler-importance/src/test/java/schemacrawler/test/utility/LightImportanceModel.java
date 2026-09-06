@@ -6,44 +6,38 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package schemacrawler.importance.model.implementation;
+package schemacrawler.test.utility;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.AsUnmodifiableGraph;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
+import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
-final class ImmutableSchemaGraphModel implements SchemaGraphModel {
+public final class LightImportanceModel implements ImportanceModel {
 
-  @Serial private static final long serialVersionUID = -2772896374981270459L;
+  private static final long serialVersionUID = -7403567390131889799L;
 
   private final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph;
   private final List<TableCluster> tableClusters;
   private final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId;
   private final Set<DatabaseObjectVertexId> tableVertexIds;
 
-  ImmutableSchemaGraphModel(
+  public LightImportanceModel(
       final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectVertexId> tableVertexIds,
-      final Map<DatabaseObjectVertexId, DatabaseObject> objectsByVertexId,
+      final Map<DatabaseObjectVertexId, ? extends DatabaseObject> objectsByVertexId,
       final List<TableCluster> tableClusters) {
-    this.catalogGraph =
-        new AsUnmodifiableGraph<>(
-            Objects.requireNonNull(catalogGraph, "No catalog graph provided"));
-    this.tableVertexIds = Collections.unmodifiableSet(new LinkedHashSet<>(tableVertexIds));
+    this.catalogGraph = catalogGraph;
+    this.tableVertexIds = Set.copyOf(tableVertexIds);
     this.objectsByVertexId = Map.copyOf(objectsByVertexId);
     this.tableClusters = List.copyOf(tableClusters);
   }
@@ -65,7 +59,7 @@ final class ImmutableSchemaGraphModel implements SchemaGraphModel {
 
   @Override
   public Optional<DatabaseObject> lookupByVertexId(final DatabaseObjectVertexId vertexId) {
-    if (vertexId == null) {
+    if (vertexId == null || !objectsByVertexId.containsKey(vertexId)) {
       return Optional.empty();
     }
     return Optional.ofNullable(objectsByVertexId.get(vertexId));
@@ -73,13 +67,20 @@ final class ImmutableSchemaGraphModel implements SchemaGraphModel {
 
   @Override
   public Optional<Table> lookupTableByVertexId(final DatabaseObjectVertexId tableVertexId) {
+    if (tableVertexId == null || tableVertexId.type() != SimpleDatabaseObjectType.table) {
+      return Optional.empty();
+    }
     return lookupByVertexId(tableVertexId).filter(Table.class::isInstance).map(Table.class::cast);
   }
 
   @Override
   public Optional<TableImportance> lookupTableImportance(
       final DatabaseObjectVertexId tableVertexId) {
-    return lookupTableByVertexId(tableVertexId)
-        .map(table -> table.<TableImportance>getAttribute(TableImportance.class.getName()));
+    final Optional<Table> optionalTableByVertexId = lookupTableByVertexId(tableVertexId);
+    if (optionalTableByVertexId.isEmpty()) {
+      return Optional.empty();
+    }
+    final Table table = optionalTableByVertexId.get();
+    return table.getAttribute(TableImportance.class.getName());
   }
 }

@@ -20,9 +20,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.TableCluster;
-import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
+import schemacrawler.importance.model.implementation.ImportanceModelBuilder;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.ForeignKey;
 import schemacrawler.schema.NamedObjectKey;
@@ -60,7 +60,7 @@ class TableClusterDetectionServiceTest {
     doReturn(List.of(fkItemsOrders)).when(orderItems).getImportedForeignKeys();
 
     final Catalog catalog = catalog(List.of(customers, orders, orderItems));
-    final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel graphModel = ImportanceModelBuilder.builder(catalog).build();
     final List<TableCluster> tableClusters = graphModel.getTableClusters();
 
     assertThat(tableClusters.size(), greaterThan(0));
@@ -75,7 +75,7 @@ class TableClusterDetectionServiceTest {
   @Test
   void returnsEmptyListForEmptyCatalog() {
     final Catalog catalog = catalog(List.of());
-    final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel graphModel = ImportanceModelBuilder.builder(catalog).build();
     final List<TableCluster> tableClusters = graphModel.getTableClusters();
 
     assertThat(tableClusters, hasSize(0));

@@ -21,8 +21,8 @@ import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.VertexUtility;
 import schemacrawler.schema.Catalog;
@@ -38,7 +38,7 @@ import schemacrawler.schema.View;
 import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
-class SchemaGraphModelBuilderTest {
+class ImportanceModelBuilderTest {
 
   private static Catalog catalog() {
     return catalog(List.of(), List.of(), List.of());
@@ -73,19 +73,19 @@ class SchemaGraphModelBuilderTest {
   @Test
   void buildsAnEmptyCatalog() {
     final Catalog catalog = catalog();
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel importanceModel = ImportanceModelBuilder.builder(catalog).build();
 
-    assertThat(schemaGraphModel.getCatalogGraph().vertexSet(), hasSize(0));
+    assertThat(importanceModel.getCatalogGraph().vertexSet(), hasSize(0));
   }
 
   @Test
   void buildsASingleTableCatalog() {
     final Table customers = table("CUSTOMERS");
     final Catalog catalog = catalog(List.of(customers), List.of(), List.of());
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel importanceModel = ImportanceModelBuilder.builder(catalog).build();
 
-    assertThat(schemaGraphModel.getCatalogGraph().vertexSet(), hasSize(1));
-    assertThat(schemaGraphModel.getTableVertexIds(), hasSize(1));
+    assertThat(importanceModel.getCatalogGraph().vertexSet(), hasSize(1));
+    assertThat(importanceModel.getTableVertexIds(), hasSize(1));
     assertThat(
         customers
             .<TableImportance>getAttribute(TableImportance.class.getName())
@@ -126,10 +126,10 @@ class SchemaGraphModelBuilderTest {
             List.of(customers, orders, orderSummary),
             List.<Routine>of(refreshOrders),
             List.of(customerAlias));
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel importanceModel = ImportanceModelBuilder.builder(catalog).build();
 
     final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph =
-        schemaGraphModel.getCatalogGraph();
+        importanceModel.getCatalogGraph();
     assertThat(catalogGraph.vertexSet(), hasSize(5));
     assertThat(catalogGraph.edgeSet(), hasSize(5));
     assertThat(edgesOfType(catalogGraph, EdgeType.FOREIGN_KEY), is(1));
@@ -167,8 +167,8 @@ class SchemaGraphModelBuilderTest {
     assertThat(
         catalogGraph.getEdgeTarget(foreignKeyEdge), is(VertexUtility.createVertexId(customers)));
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
-    assertThat(schemaGraphModel.getTableVertexIds(), hasSize(3));
-    assertThat(schemaGraphModel.getTableClusters(), hasSize(1));
+    assertThat(importanceModel.getTableVertexIds(), hasSize(3));
+    assertThat(importanceModel.getTableClusters(), hasSize(1));
     assertThat(
         orders
             .<TableImportance>getAttribute(TableImportance.class.getName())
@@ -195,8 +195,8 @@ class SchemaGraphModelBuilderTest {
             catalogGraph.addVertex(
                 new DatabaseObjectVertexId(
                     new NamedObjectKey("OTHER"), SimpleDatabaseObjectType.table)));
-    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableVertexIds()::clear);
-    assertThrows(UnsupportedOperationException.class, schemaGraphModel.getTableClusters()::clear);
+    assertThrows(UnsupportedOperationException.class, importanceModel.getTableVertexIds()::clear);
+    assertThrows(UnsupportedOperationException.class, importanceModel.getTableClusters()::clear);
   }
 
   @Test
@@ -206,13 +206,13 @@ class SchemaGraphModelBuilderTest {
     initialize(procedure, "ORDERS");
 
     final Catalog catalog = catalog(List.of(table), List.<Routine>of(procedure), List.of());
-    final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
+    final ImportanceModel importanceModel = ImportanceModelBuilder.builder(catalog).build();
 
     assertThat(
-        schemaGraphModel.lookupByVertexId(VertexUtility.createVertexId(table)).orElseThrow(),
+        importanceModel.lookupByVertexId(VertexUtility.createVertexId(table)).orElseThrow(),
         is(table));
     assertThat(
-        schemaGraphModel.lookupByVertexId(VertexUtility.createVertexId(procedure)).orElseThrow(),
+        importanceModel.lookupByVertexId(VertexUtility.createVertexId(procedure)).orElseThrow(),
         is(procedure));
   }
 
@@ -226,7 +226,7 @@ class SchemaGraphModelBuilderTest {
     doReturn(List.of(foreignKey)).when(orders).getImportedForeignKeys();
 
     final Catalog catalog = catalog(List.of(customers, orders), List.of(), List.of());
-    SchemaGraphModelBuilder.builder(catalog).build();
+    ImportanceModelBuilder.builder(catalog).build();
 
     assertThat(
         customers.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),

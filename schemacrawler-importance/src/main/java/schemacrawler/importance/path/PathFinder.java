@@ -20,8 +20,8 @@ import org.jgrapht.graph.AsUnmodifiableGraph;
 import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
 import schemacrawler.importance.model.EdgeType;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 
 /** Finds directed shortest paths through table foreign-key relationships. */
 public final class PathFinder {
@@ -32,11 +32,11 @@ public final class PathFinder {
   private final Graph<DatabaseObjectVertexId, SchemaEdge> foreignKeyGraph;
   private final Set<DatabaseObjectVertexId> tableVertexIds;
 
-  public PathFinder(final SchemaGraphModel schemaGraphModel) {
-    requireNonNull(schemaGraphModel, "No schema graph model provided");
-    tableVertexIds = Set.copyOf(schemaGraphModel.getTableVertexIds());
+  public PathFinder(final ImportanceModel importanceModel) {
+    requireNonNull(importanceModel, "No importance model provided");
+    tableVertexIds = Set.copyOf(importanceModel.getTableVertexIds());
     final Graph<DatabaseObjectVertexId, SchemaEdge> catalogGraph =
-        schemaGraphModel.getCatalogGraph();
+        importanceModel.getCatalogGraph();
     foreignKeyGraph = pathGraph(catalogGraph, edge -> edge.getEdgeType() == EdgeType.FOREIGN_KEY);
     fallbackGraph =
         pathGraph(

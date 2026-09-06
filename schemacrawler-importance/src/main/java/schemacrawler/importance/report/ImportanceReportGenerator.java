@@ -14,14 +14,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
-import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.options.ImportanceOptions;
 import schemacrawler.inclusionrule.InclusionRule;
 import schemacrawler.schema.Table;
 
-/** Builds filtered, deterministically ordered importance reports from a schema graph model. */
+/** Builds filtered, deterministically ordered importance reports from an importance model. */
 public final class ImportanceReportGenerator {
 
   private static final Comparator<ImportanceReportEntry> IMPORTANCE_REPORT_ENTRY_COMPARATOR =
@@ -39,10 +39,10 @@ public final class ImportanceReportGenerator {
     return List.copyOf(entries.subList(0, limit));
   }
 
-  private final SchemaGraphModel schemaGraphModel;
+  private final ImportanceModel importanceModel;
 
-  public ImportanceReportGenerator(final SchemaGraphModel schemaGraphModel) {
-    this.schemaGraphModel = requireNonNull(schemaGraphModel, "No schema graph model provided");
+  public ImportanceReportGenerator(final ImportanceModel importanceModel) {
+    this.importanceModel = requireNonNull(importanceModel, "No importance model provided");
   }
 
   /** Gets the complete importance report using the supplied inclusion and limit options. */
@@ -61,12 +61,12 @@ public final class ImportanceReportGenerator {
 
   private List<ClusterReportEntry> reportTableClusters(
       final InclusionRule tableInclusionRule, final int maxClusterSize) {
-    final List<TableCluster> tableClusters = schemaGraphModel.getTableClusters();
+    final List<TableCluster> tableClusters = importanceModel.getTableClusters();
 
     final List<ClusterReportEntry> entries = new ArrayList<>();
     for (final TableCluster tableCluster : tableClusters) {
       final Table anchorTable =
-          schemaGraphModel.lookupTableByVertexId(tableCluster.anchorVertexId()).orElse(null);
+          importanceModel.lookupTableByVertexId(tableCluster.anchorVertexId()).orElse(null);
       final String anchorFullName =
           anchorTable != null
               ? anchorTable.getFullName()
@@ -77,7 +77,7 @@ public final class ImportanceReportGenerator {
       final List<String> allFullNames = new ArrayList<>();
 
       for (final DatabaseObjectVertexId memberId : allMembers) {
-        final Table memberTable = schemaGraphModel.lookupTableByVertexId(memberId).orElse(null);
+        final Table memberTable = importanceModel.lookupTableByVertexId(memberId).orElse(null);
         final String fullName =
             memberTable != null ? memberTable.getFullName() : memberId.key().toString();
         allFullNames.add(fullName);
@@ -117,8 +117,8 @@ public final class ImportanceReportGenerator {
   private List<ImportanceReportEntry> reportTables(
       final InclusionRule tableInclusionRule, final int maxTables) {
     final List<ImportanceReportEntry> entries = new ArrayList<>();
-    for (final DatabaseObjectVertexId vertexId : schemaGraphModel.getTableVertexIds()) {
-      final Table table = schemaGraphModel.lookupTableByVertexId(vertexId).orElse(null);
+    for (final DatabaseObjectVertexId vertexId : importanceModel.getTableVertexIds()) {
+      final Table table = importanceModel.lookupTableByVertexId(vertexId).orElse(null);
       if (table == null || !tableInclusionRule.test(table.getFullName())) {
         continue;
       }

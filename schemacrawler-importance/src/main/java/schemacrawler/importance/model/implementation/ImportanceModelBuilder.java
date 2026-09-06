@@ -17,8 +17,8 @@ import java.util.Map.Entry;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsUndirectedGraph;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Catalog;
@@ -28,16 +28,16 @@ import schemacrawler.schema.Table;
 import us.fatehi.utility.Builder;
 
 /** Builds the immutable dependency graph foundation from a SchemaCrawler catalog. */
-public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> {
+public final class ImportanceModelBuilder implements Builder<ImportanceModel> {
 
-  public static SchemaGraphModelBuilder builder(final Catalog catalog) {
+  public static ImportanceModelBuilder builder(final Catalog catalog) {
     requireNonNull(catalog, "No catalog provided");
-    return new SchemaGraphModelBuilder(catalog);
+    return new ImportanceModelBuilder(catalog);
   }
 
   private final SchemaGraphAssembly assembly;
 
-  private SchemaGraphModelBuilder(final Catalog catalog) {
+  private ImportanceModelBuilder(final Catalog catalog) {
     requireNonNull(catalog, "No catalog provided");
 
     final Collection<Table> tables = catalog.getTables();
@@ -70,10 +70,10 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
   }
 
   @Override
-  public SchemaGraphModel build() {
+  public ImportanceModel build() {
     if (assembly.catalogGraph() == null) {
       throw new IllegalStateException(
-          "Build vertices and edges before building the schema graph model");
+          "Build vertices and edges before building the importance model");
     }
     final Map<DatabaseObjectVertexId, TableImportanceMetrics> topologyMetrics =
         GraphMetricsCalculator.calculate(assembly.catalogGraph());
@@ -98,7 +98,7 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     final List<TableCluster> tableClusters =
         TableClusterDetector.detectClusters(tableSubgraph, assembly.tablesByVertexId());
 
-    return new ImmutableSchemaGraphModel(
+    return new ImmutableImportanceModel(
         assembly.catalogGraph(),
         assembly.tableVertexIds(),
         assembly.objectsByVertexId(),

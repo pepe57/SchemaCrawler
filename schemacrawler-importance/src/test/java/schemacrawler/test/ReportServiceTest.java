@@ -21,8 +21,8 @@ import java.util.UUID;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectVertexId;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.importance.model.SchemaEdge;
-import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
@@ -33,7 +33,7 @@ import schemacrawler.importance.report.ImportanceReportGenerator;
 import schemacrawler.inclusionrule.RegularExpressionRule;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Table;
-import schemacrawler.test.utility.LightSchemaGraphModel;
+import schemacrawler.test.utility.LightImportanceModel;
 import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
@@ -65,13 +65,12 @@ class ReportServiceTest {
         .toOptions();
   }
 
-  private static SchemaGraphModel schemaGraphModel(
+  private static ImportanceModel importanceModel(
       final DefaultDirectedGraph<DatabaseObjectVertexId, SchemaEdge> catalogGraph,
       final Set<DatabaseObjectVertexId> tableVertexIds,
       final Map<DatabaseObjectVertexId, Table> objectsByVertexId,
       final List<TableCluster> tableClusters) {
-    return new LightSchemaGraphModel(
-        catalogGraph, tableVertexIds, objectsByVertexId, tableClusters);
+    return new LightImportanceModel(catalogGraph, tableVertexIds, objectsByVertexId, tableClusters);
   }
 
   private static int score(final String name) {
@@ -99,15 +98,14 @@ class ReportServiceTest {
   void appliesTheSuppliedInclusionRule() {
     final Table alpha = table("ALPHA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode),
             Map.of(alphaNode, alpha),
             List.of());
 
-    final var report =
-        new ImportanceReportGenerator(schemaGraphModel).report(options(".*BETA", -1));
+    final var report = new ImportanceReportGenerator(importanceModel).report(options(".*BETA", -1));
 
     assertThat(report.tables().isEmpty(), is(true));
   }
@@ -118,14 +116,14 @@ class ReportServiceTest {
     final Table beta = tableWithScore("BETA", 5, 1.0);
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final DatabaseObjectVertexId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
 
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+    final var report = new ImportanceReportGenerator(importanceModel).report(options(".*", -1));
 
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
     assertThat(report.tables().get(1).tableFullName(), is("ALPHA"));
@@ -141,8 +139,8 @@ class ReportServiceTest {
         new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
     final TableCluster secondCluster =
         new TableCluster(UUID.randomUUID(), betaNode, List.of(betaNode));
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
@@ -153,7 +151,7 @@ class ReportServiceTest {
             .withTableInclusionRule(new RegularExpressionRule(".*", ""))
             .withMaxClusters(1)
             .toOptions();
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options);
+    final var report = new ImportanceReportGenerator(importanceModel).report(options);
 
     assertThat(report.clusters(), hasSize(1));
     assertThat(report.clusters().get(0).id(), is(firstCluster.id()));
@@ -165,15 +163,15 @@ class ReportServiceTest {
     final Table beta = table("BETA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final DatabaseObjectVertexId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
 
     final var reportNegative =
-        new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+        new ImportanceReportGenerator(importanceModel).report(options(".*", -1));
     assertThat(reportNegative.tables().size(), is(2));
   }
 
@@ -183,14 +181,14 @@ class ReportServiceTest {
     final Table beta = table("BETA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final DatabaseObjectVertexId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
 
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+    final var report = new ImportanceReportGenerator(importanceModel).report(options(".*", -1));
 
     assertThat(report.tables(), contains(entry(betaNode, "BETA"), entry(alphaNode, "ALPHA")));
     assertThat(report.tables().get(0).tableVertexId(), is(betaNode));
@@ -204,14 +202,14 @@ class ReportServiceTest {
     final Table beta = table("BETA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final DatabaseObjectVertexId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
 
-    final var reportZero = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", 0));
+    final var reportZero = new ImportanceReportGenerator(importanceModel).report(options(".*", 0));
     assertThat(reportZero.tables(), empty());
   }
 
@@ -221,33 +219,33 @@ class ReportServiceTest {
     final Table beta = table("BETA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final DatabaseObjectVertexId betaNode = node("BETA");
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode, betaNode),
             Map.of(alphaNode, alpha, betaNode, beta),
             List.of());
 
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", 1));
+    final var report = new ImportanceReportGenerator(importanceModel).report(options(".*", 1));
 
     assertThat(report.tables().size(), is(1));
     assertThat(report.tables().get(0).tableFullName(), is("BETA"));
   }
 
   @Test
-  void usesClustersCachedOnTheSchemaGraphModel() {
+  void usesClustersCachedOnTheImportanceModel() {
     final Table alpha = table("ALPHA");
     final DatabaseObjectVertexId alphaNode = node("ALPHA");
     final TableCluster cachedTableCluster =
         new TableCluster(UUID.randomUUID(), alphaNode, List.of(alphaNode));
-    final SchemaGraphModel schemaGraphModel =
-        schemaGraphModel(
+    final ImportanceModel importanceModel =
+        importanceModel(
             new DefaultDirectedGraph<>(SchemaEdge.class),
             Set.of(alphaNode),
             Map.of(alphaNode, alpha),
             List.of(cachedTableCluster));
 
-    final var report = new ImportanceReportGenerator(schemaGraphModel).report(options(".*", -1));
+    final var report = new ImportanceReportGenerator(importanceModel).report(options(".*", -1));
 
     assertThat(report.clusters(), hasSize(1));
     assertThat(report.clusters().get(0).id(), is(cachedTableCluster.id()));

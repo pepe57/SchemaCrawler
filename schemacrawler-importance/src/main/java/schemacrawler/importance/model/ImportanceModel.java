@@ -17,7 +17,7 @@ import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 
 /** Immutable graph and object lookup data built from a SchemaCrawler catalog. */
-public interface SchemaGraphModel extends Serializable {
+public interface ImportanceModel extends Serializable {
 
   Graph<DatabaseObjectVertexId, SchemaEdge> getCatalogGraph();
 

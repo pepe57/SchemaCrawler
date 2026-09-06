@@ -14,14 +14,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.regex.Pattern;
-import schemacrawler.importance.model.SchemaGraphModel;
+import schemacrawler.importance.model.ImportanceModel;
 import schemacrawler.utility.SerializedObjectInputStream;
 import us.fatehi.utility.UtilityMarker;
 
 @UtilityMarker
-public final class SerializedSchemaGraphModelUtility {
+public final class SerializedImportanceModelUtility {
 
-  private static final List<Pattern> SCHEMA_GRAPH_MODEL_CLASS_PATTERNS =
+  private static final List<Pattern> IMPORTANCE_MODEL_CLASS_PATTERNS =
       List.of(
           Pattern.compile("org\\.jgrapht\\..*"),
           Pattern.compile("us\\.fatehi\\.utility\\.[A-Z].*"),
@@ -36,19 +36,19 @@ public final class SerializedSchemaGraphModelUtility {
           Pattern.compile("java\\.(sql|math|time|net)\\..*"),
           Pattern.compile("\\[[BC]"));
 
-  public static SchemaGraphModel readSchemaGraphModel(final InputStream in) {
+  public static ImportanceModel readImportanceModel(final InputStream in) {
     requireNonNull(in, "No input stream provided");
-    return SerializedObjectInputStream.read(in, SCHEMA_GRAPH_MODEL_CLASS_PATTERNS);
+    return SerializedObjectInputStream.read(in, IMPORTANCE_MODEL_CLASS_PATTERNS);
   }
 
-  public static void saveSchemaGraphModel(
-      final SchemaGraphModel schemaGraphModel, final OutputStream out) {
-    requireNonNull(schemaGraphModel, "No schema graph model provided");
+  public static void saveImportanceModel(
+      final ImportanceModel importanceModel, final OutputStream out) {
+    requireNonNull(importanceModel, "No importance model provided");
     requireNonNull(out, "No output stream provided");
-    SerializedObjectInputStream.save(schemaGraphModel, out);
+    SerializedObjectInputStream.save(importanceModel, out);
   }
 
-  private SerializedSchemaGraphModelUtility() {
+  private SerializedImportanceModelUtility() {
     // Prevent instantiation
   }
 }
