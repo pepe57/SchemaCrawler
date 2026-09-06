@@ -13,24 +13,21 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
-import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.implementation.SchemaGraphModelBuilder;
 import schemacrawler.schema.Catalog;
 import schemacrawler.schema.ForeignKey;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Table;
-import schemacrawler.schema.TableType;
+import schemacrawler.test.utility.crawl.LightTable;
 
 class CommunityDetectionServiceTest {
 
@@ -42,27 +39,8 @@ class CommunityDetectionServiceTest {
     return catalog;
   }
 
-  private static void initialize(final Table table, final String name) {
-    when(table.key()).thenReturn(new NamedObjectKey("PUBLIC", name));
-    when(table.getFullName()).thenReturn("PUBLIC." + name);
-    when(table.getTableType()).thenReturn(new TableType("TABLE"));
-    when(table.getColumns()).thenReturn(List.of());
-    when(table.getReferencedTables()).thenReturn(List.of());
-    when(table.getIndexes()).thenReturn(List.of());
-    when(table.getTriggers()).thenReturn(List.of());
-    when(table.hasPrimaryKey()).thenReturn(false);
-    when(table.hasForeignKeys()).thenReturn(false);
-    when(table.hasIndexes()).thenReturn(false);
-    when(table.isSelfReferencing()).thenReturn(false);
-    when(table.hasTriggers()).thenReturn(false);
-  }
-
   private static Table table(final String name) {
-    final Table table = mock(Table.class);
-    initialize(table, name);
-    when(table.getImportedForeignKeys()).thenReturn(List.of());
-    when(table.getTableConstraints()).thenReturn(List.of());
-    return table;
+    return spy(new LightTable(name));
   }
 
   @Test
@@ -81,52 +59,15 @@ class CommunityDetectionServiceTest {
     final Table orders = table("ORDERS");
     final Table orderItems = table("ORDER_ITEMS");
 
-    final AtomicReference<TableImportance> customersImportance = new AtomicReference<>();
-    final AtomicReference<TableImportance> ordersImportance = new AtomicReference<>();
-    final AtomicReference<TableImportance> orderItemsImportance = new AtomicReference<>();
-
-    doAnswer(
-            i -> {
-              customersImportance.set(i.getArgument(1));
-              return null;
-            })
-        .when(customers)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-    doAnswer(i -> customersImportance.get())
-        .when(customers)
-        .getAttribute(TableImportance.class.getName());
-
-    doAnswer(
-            i -> {
-              ordersImportance.set(i.getArgument(1));
-              return null;
-            })
-        .when(orders)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-    doAnswer(i -> ordersImportance.get())
-        .when(orders)
-        .getAttribute(TableImportance.class.getName());
-
-    doAnswer(
-            i -> {
-              orderItemsImportance.set(i.getArgument(1));
-              return null;
-            })
-        .when(orderItems)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-    doAnswer(i -> orderItemsImportance.get())
-        .when(orderItems)
-        .getAttribute(TableImportance.class.getName());
-
     final ForeignKey fkOrdersCustomers = mock(ForeignKey.class);
     when(fkOrdersCustomers.getPrimaryKeyTable()).thenReturn(customers);
     when(fkOrdersCustomers.key()).thenReturn(new NamedObjectKey("FK_ORDERS_CUSTOMERS"));
-    when(orders.getImportedForeignKeys()).thenReturn(List.of(fkOrdersCustomers));
+    doReturn(List.of(fkOrdersCustomers)).when(orders).getImportedForeignKeys();
 
     final ForeignKey fkItemsOrders = mock(ForeignKey.class);
     when(fkItemsOrders.getPrimaryKeyTable()).thenReturn(orders);
     when(fkItemsOrders.key()).thenReturn(new NamedObjectKey("FK_ITEMS_ORDERS"));
-    when(orderItems.getImportedForeignKeys()).thenReturn(List.of(fkItemsOrders));
+    doReturn(List.of(fkItemsOrders)).when(orderItems).getImportedForeignKeys();
 
     final Catalog catalog = catalog(List.of(customers, orders, orderItems));
     final SchemaGraphModel graphModel = SchemaGraphModelBuilder.builder(catalog).build();

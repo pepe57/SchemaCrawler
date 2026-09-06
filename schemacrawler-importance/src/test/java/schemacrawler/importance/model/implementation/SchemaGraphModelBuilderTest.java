@@ -9,16 +9,14 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import org.jgrapht.Graph;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
@@ -36,8 +34,8 @@ import schemacrawler.schema.Synonym;
 import schemacrawler.schema.Table;
 import schemacrawler.schema.TableConstraintType;
 import schemacrawler.schema.TableReference;
-import schemacrawler.schema.TableType;
 import schemacrawler.schema.View;
+import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 
 class SchemaGraphModelBuilderTest {
@@ -68,35 +66,8 @@ class SchemaGraphModelBuilderTest {
     when(synonym.key()).thenReturn(new NamedObjectKey("PUBLIC", name));
   }
 
-  private static void initialize(final Table table, final String name) {
-    when(table.key()).thenReturn(new NamedObjectKey("PUBLIC", name));
-    when(table.getTableType()).thenReturn(new TableType("TABLE"));
-    when(table.getColumns()).thenReturn(List.of());
-    when(table.getReferencedTables()).thenReturn(List.of());
-    when(table.getIndexes()).thenReturn(List.of());
-    when(table.getTriggers()).thenReturn(List.of());
-    when(table.hasPrimaryKey()).thenReturn(false);
-    when(table.hasForeignKeys()).thenReturn(false);
-    when(table.hasIndexes()).thenReturn(false);
-    when(table.isSelfReferencing()).thenReturn(false);
-    when(table.hasTriggers()).thenReturn(false);
-  }
-
   private static Table table(final String name) {
-    final Table table = mock(Table.class);
-    initialize(table, name);
-    when(table.getImportedForeignKeys()).thenReturn(List.of());
-    when(table.getTableConstraints()).thenReturn(List.of());
-    when(table.getColumns()).thenReturn(List.of());
-    when(table.getReferencedTables()).thenReturn(List.of());
-    when(table.getIndexes()).thenReturn(List.of());
-    when(table.getTriggers()).thenReturn(List.of());
-    when(table.hasPrimaryKey()).thenReturn(false);
-    when(table.hasForeignKeys()).thenReturn(false);
-    when(table.hasIndexes()).thenReturn(false);
-    when(table.isSelfReferencing()).thenReturn(false);
-    when(table.hasTriggers()).thenReturn(false);
-    return table;
+    return spy(new LightTable(name));
   }
 
   @Test
@@ -110,18 +81,6 @@ class SchemaGraphModelBuilderTest {
   @Test
   void buildsASingleTableCatalog() {
     final Table customers = table("CUSTOMERS");
-    final AtomicReference<TableImportance> importance = new AtomicReference<>();
-    doAnswer(
-            invocation -> {
-              importance.set(invocation.getArgument(1));
-              return null;
-            })
-        .when(customers)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-    doAnswer(invocation -> importance.get())
-        .when(customers)
-        .getAttribute(TableImportance.class.getName());
-
     final Catalog catalog = catalog(List.of(customers), List.of(), List.of());
     final SchemaGraphModel schemaGraphModel = SchemaGraphModelBuilder.builder(catalog).build();
 
@@ -139,17 +98,9 @@ class SchemaGraphModelBuilderTest {
   void buildsTypedEdgesForAllSupportedCatalogObjects() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
-    final AtomicReference<TableImportance> ordersImportance = new AtomicReference<>();
-    doAnswer(
-            invocation -> {
-              ordersImportance.set(invocation.getArgument(1));
-              return null;
-            })
-        .when(orders)
-        .setAttribute(eq(TableImportance.class.getName()), any());
     final View orderSummary = mock(View.class);
-    initialize(orderSummary, "ORDER_SUMMARY");
-    when(orderSummary.getTableType()).thenReturn(new TableType("VIEW"));
+    when(orderSummary.key()).thenReturn(new NamedObjectKey("PUBLIC", "ORDER_SUMMARY"));
+    when(orderSummary.getTableType()).thenReturn(new schemacrawler.schema.TableType("VIEW"));
     doReturn(List.of(orders)).when(orderSummary).getReferencedObjects();
     final Procedure refreshOrders = mock(Procedure.class);
     initialize(refreshOrders, "REFRESH_ORDERS");
@@ -162,13 +113,13 @@ class SchemaGraphModelBuilderTest {
     final ForeignKey foreignKey = mock(ForeignKey.class);
     when(foreignKey.getPrimaryKeyTable()).thenReturn(customers);
     when(foreignKey.key()).thenReturn(new NamedObjectKey("FK_ORDERS_CUSTOMERS"));
-    when(orders.getImportedForeignKeys()).thenReturn(List.of(foreignKey));
+    doReturn(List.of(foreignKey)).when(orders).getImportedForeignKeys();
 
     final TableReference impliedAssociation = mock(TableReference.class);
     when(impliedAssociation.getType()).thenReturn(TableConstraintType.implicit_association);
     when(impliedAssociation.getPrimaryKeyTable()).thenReturn(customers);
     when(impliedAssociation.key()).thenReturn(new NamedObjectKey("IA_ORDERS_CUSTOMERS"));
-    when(orders.getTableConstraints()).thenReturn(List.of(impliedAssociation));
+    doReturn(List.of(impliedAssociation)).when(orders).getTableConstraints();
 
     final Catalog catalog =
         catalog(
@@ -218,12 +169,24 @@ class SchemaGraphModelBuilderTest {
     assertThat(foreignKeyEdge.getReferenceKey(), is(foreignKey.key()));
     assertThat(schemaGraphModel.getTableNodes(), hasSize(3));
     assertThat(schemaGraphModel.getTableClusters(), hasSize(1));
-    assertThat(ordersImportance.get().importanceMetrics().inDegree(), is(2));
-    assertThat(ordersImportance.get().importanceMetrics().outDegree(), is(2));
     assertThat(
-        ordersImportance.get().importanceMetrics().betweennessCentrality(), greaterThan(0.0));
-    verify(orderSummary)
-        .setAttribute(eq(TableImportance.class.getName()), any(TableImportance.class));
+        orders
+            .<TableImportance>getAttribute(TableImportance.class.getName())
+            .importanceMetrics()
+            .inDegree(),
+        is(2));
+    assertThat(
+        orders
+            .<TableImportance>getAttribute(TableImportance.class.getName())
+            .importanceMetrics()
+            .outDegree(),
+        is(2));
+    assertThat(
+        orders
+            .<TableImportance>getAttribute(TableImportance.class.getName())
+            .importanceMetrics()
+            .betweennessCentrality(),
+        greaterThan(0.0));
     verify(refreshOrders, never()).setAttribute(anyString(), any());
     verify(customerAlias, never()).setAttribute(anyString(), any());
     assertThrows(
@@ -240,35 +203,26 @@ class SchemaGraphModelBuilderTest {
   void storesAnImportanceScoreWithinZeroToOneHundredForEveryTable() {
     final Table customers = table("CUSTOMERS");
     final Table orders = table("ORDERS");
-    final AtomicReference<TableImportance> customersImportance = new AtomicReference<>();
-    final AtomicReference<TableImportance> ordersImportance = new AtomicReference<>();
-    doAnswer(
-            invocation -> {
-              customersImportance.set(invocation.getArgument(1));
-              return null;
-            })
-        .when(customers)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-    doAnswer(
-            invocation -> {
-              ordersImportance.set(invocation.getArgument(1));
-              return null;
-            })
-        .when(orders)
-        .setAttribute(eq(TableImportance.class.getName()), any());
-
     final ForeignKey foreignKey = mock(ForeignKey.class);
     when(foreignKey.getPrimaryKeyTable()).thenReturn(customers);
     when(foreignKey.key()).thenReturn(new NamedObjectKey("FK_ORDERS_CUSTOMERS"));
-    when(orders.getImportedForeignKeys()).thenReturn(List.of(foreignKey));
+    doReturn(List.of(foreignKey)).when(orders).getImportedForeignKeys();
 
     final Catalog catalog = catalog(List.of(customers, orders), List.of(), List.of());
     SchemaGraphModelBuilder.builder(catalog).build();
 
-    assertThat(customersImportance.get().importanceScore(), greaterThanOrEqualTo(0));
-    assertThat(customersImportance.get().importanceScore(), lessThanOrEqualTo(100));
-    assertThat(ordersImportance.get().importanceScore(), greaterThanOrEqualTo(0));
-    assertThat(ordersImportance.get().importanceScore(), lessThanOrEqualTo(100));
+    assertThat(
+        customers.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),
+        greaterThanOrEqualTo(0));
+    assertThat(
+        customers.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),
+        lessThanOrEqualTo(100));
+    assertThat(
+        orders.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),
+        greaterThanOrEqualTo(0));
+    assertThat(
+        orders.<TableImportance>getAttribute(TableImportance.class.getName()).importanceScore(),
+        lessThanOrEqualTo(100));
   }
 
   @Test

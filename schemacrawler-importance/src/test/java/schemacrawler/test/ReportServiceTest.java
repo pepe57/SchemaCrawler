@@ -13,8 +13,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +34,7 @@ import schemacrawler.inclusionrule.RegularExpressionRule;
 import schemacrawler.schema.NamedObjectKey;
 import schemacrawler.schema.Table;
 import schemacrawler.test.utility.LightSchemaGraphModel;
+import schemacrawler.test.utility.crawl.LightTable;
 import schemacrawler.tools.utility.TableCounts;
 import schemacrawler.tools.utility.TableTraits;
 import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
@@ -189,15 +188,14 @@ class ReportServiceTest {
 
   private static Table tableWithScore(
       final String name, final int importanceScore, final double betweennessCentrality) {
-    final Table table = mock(Table.class);
-    when(table.getFullName()).thenReturn(name);
-    when(table.getAttribute(TableImportance.class.getName()))
-        .thenReturn(
-            new TableImportance(
-                importanceScore,
-                new TableImportanceMetrics(0, 0, betweennessCentrality, 0, 0),
-                new TableTraits(),
-                new TableCounts()));
+    final Table table = new LightTable(name);
+    table.setAttribute(
+        TableImportance.class.getName(),
+        new TableImportance(
+            importanceScore,
+            new TableImportanceMetrics(0, 0, betweennessCentrality, 0, 0),
+            new TableTraits(),
+            new TableCounts()));
     return table;
   }
 

@@ -8,11 +8,16 @@
 
 package schemacrawler.importance.model.implementation;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.importance.model.TableImportanceMetrics;
+import schemacrawler.schema.Table;
 import schemacrawler.tools.utility.TableCounts;
+import schemacrawler.tools.utility.TableImportanceUtility;
 import schemacrawler.tools.utility.TableTraits;
 
 /**
@@ -35,11 +40,12 @@ final class TableImportanceInputs {
     return inputs.get(nodeId);
   }
 
-  void put(
-      final DatabaseObjectNodeId nodeId,
-      final TableTraits tableTraits,
-      final TableCounts tableCounts,
-      final TableImportanceMetrics importanceMetrics) {
+  void putTableImportance(final Table table, final TableImportanceMetrics importanceMetrics) {
+    requireNonNull(table, "No table provided");
+    requireNonNull(importanceMetrics, "No table importance metrics provided");
+    final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(table);
+    final TableTraits tableTraits = TableImportanceUtility.tableTraitsfrom(table);
+    final TableCounts tableCounts = TableImportanceUtility.tableCountsfrom(table);
     inputs.put(nodeId, new TableImportanceInput(tableTraits, tableCounts, importanceMetrics));
   }
 }

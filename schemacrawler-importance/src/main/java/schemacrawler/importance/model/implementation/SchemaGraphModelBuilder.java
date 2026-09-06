@@ -21,7 +21,6 @@ import schemacrawler.schema.Catalog;
 import schemacrawler.schema.Routine;
 import schemacrawler.schema.Synonym;
 import schemacrawler.schema.Table;
-import schemacrawler.tools.utility.TableImportanceUtility;
 import us.fatehi.utility.Builder;
 
 /** Builds the immutable dependency graph foundation from a SchemaCrawler catalog. */
@@ -75,11 +74,7 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
       final DatabaseObjectNodeId nodeId = entry.getKey();
       final Table table = entry.getValue();
-      inputs.put(
-          nodeId,
-          TableImportanceUtility.tableTraitsfrom(table),
-          TableImportanceUtility.tableCountsfrom(table),
-          topologyMetrics.get(nodeId));
+      inputs.putTableImportance(table, topologyMetrics.get(nodeId));
     }
 
     final Map<DatabaseObjectNodeId, Integer> importanceScores =

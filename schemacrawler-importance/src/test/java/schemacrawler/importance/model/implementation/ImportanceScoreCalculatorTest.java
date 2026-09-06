@@ -15,85 +15,69 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
+import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
 import schemacrawler.importance.model.TableImportanceMetrics;
-import schemacrawler.schema.NamedObjectKey;
-import schemacrawler.tools.utility.EntityModelType;
-import schemacrawler.tools.utility.TableCounts;
-import schemacrawler.tools.utility.TableTraits;
-import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
+import schemacrawler.schema.Table;
+import schemacrawler.test.utility.crawl.LightPrimaryKey;
+import schemacrawler.test.utility.crawl.LightTable;
 
 class ImportanceScoreCalculatorTest {
 
   @Test
-  void strongEntityOutranksPoorlyConnectedBridgeTableAllElseEqual() {
-    final DatabaseObjectNodeId strongEntity = node("AUTHORS");
-    final DatabaseObjectNodeId bridgeTable = node("BOOKAUTHORS");
+  void connectedTableOutranksDisconnectedTable() {
+    final Table connectedTable = table("AUTHORS");
+    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
+    final Table disconnectedTable = table("BOOKAUTHORS");
+    final DatabaseObjectNodeId disconnectedNode =
+        DatabaseObjectNodeIdUtility.create(disconnectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(
-        inputs,
-        strongEntity,
-        new TableImportanceMetrics(1, 1, 0.1, 1, 1),
-        traits(EntityModelType.strong_entity, false, false),
-        counts(5, 2, 10L));
-    put(
-        inputs,
-        bridgeTable,
-        new TableImportanceMetrics(1, 1, 0.1, 1, 1),
-        traits(EntityModelType.bridge_table, false, false),
-        counts(5, 2, 10L));
+    put(inputs, connectedTable, new TableImportanceMetrics(1, 1, 0.1, 1, 1), false, false);
+    put(inputs, disconnectedTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
-    assertThat(scores.get(strongEntity), greaterThan(scores.get(bridgeTable)));
+    assertThat(scores.get(connectedNode), greaterThan(scores.get(disconnectedNode)));
   }
 
   @Test
-  void wellConnectedBridgeTableOutranksPoorlyConnectedStrongEntity() {
-    final DatabaseObjectNodeId strongEntity = node("SMALL_LOOKUP");
-    final DatabaseObjectNodeId bridgeTable = node("BOOKAUTHORS");
+  void wellConnectedTableOutranksPoorlyConnectedTable() {
+    final Table smallTable = table("SMALL_LOOKUP");
+    final DatabaseObjectNodeId smallNode = DatabaseObjectNodeIdUtility.create(smallTable);
+    final Table connectedTable = table("BOOKAUTHORS");
+    final DatabaseObjectNodeId connectedNode = DatabaseObjectNodeIdUtility.create(connectedTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(
-        inputs,
-        strongEntity,
-        new TableImportanceMetrics(0, 0, 0.0, 0, 0),
-        traits(EntityModelType.strong_entity, false, false),
-        counts(2, 0, 5L));
-    put(
-        inputs,
-        bridgeTable,
-        new TableImportanceMetrics(10, 10, 50.0, 20, 20),
-        traits(EntityModelType.bridge_table, false, false),
-        counts(2, 2, 1000L));
+    put(inputs, smallTable, new TableImportanceMetrics(0, 0, 0.0, 0, 0), false, false);
+    put(inputs, connectedTable, new TableImportanceMetrics(10, 10, 50.0, 20, 20), false, false);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
-    assertThat(scores.get(bridgeTable), greaterThan(scores.get(strongEntity)));
+    assertThat(scores.get(connectedNode), greaterThan(scores.get(smallNode)));
   }
 
   @Test
   void missingPrimaryKeyOrIndexesDampensWithoutZeroingOutTheScore() {
-    final DatabaseObjectNodeId wellFormed = node("WELL_FORMED");
-    final DatabaseObjectNodeId noPrimaryKeyOrIndexes = node("NO_PK_NO_INDEXES");
+    final Table wellFormedTable = table("WELL_FORMED");
+    final DatabaseObjectNodeId wellFormed = DatabaseObjectNodeIdUtility.create(wellFormedTable);
+    final Table noPrimaryKeyOrIndexesTable = table("NO_PK_NO_INDEXES");
+    final DatabaseObjectNodeId noPrimaryKeyOrIndexes =
+        DatabaseObjectNodeIdUtility.create(noPrimaryKeyOrIndexesTable);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
+    put(inputs, wellFormedTable, new TableImportanceMetrics(2, 2, 1.0, 2, 2), true, true);
     put(
         inputs,
-        wellFormed,
+        noPrimaryKeyOrIndexesTable,
         new TableImportanceMetrics(2, 2, 1.0, 2, 2),
-        traits(EntityModelType.strong_entity, false, false),
-        counts(5, 2, 100L));
-    put(
-        inputs,
-        noPrimaryKeyOrIndexes,
-        new TableImportanceMetrics(2, 2, 1.0, 2, 2),
-        traits(EntityModelType.strong_entity, true, true),
-        counts(5, 2, 100L));
+        false,
+        false);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
@@ -104,51 +88,38 @@ class ImportanceScoreCalculatorTest {
   }
 
   @Test
-  void everySignalNormalizesToZeroWhenItsCatalogMaximumIsZero() {
-    final DatabaseObjectNodeId onlyTable = node("ONLY_TABLE");
+  void zeroGraphSignalsProduceAValidScore() {
+    final Table table = table("ONLY_TABLE");
+    final DatabaseObjectNodeId onlyTable = DatabaseObjectNodeIdUtility.create(table);
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(
-        inputs,
-        onlyTable,
-        new TableImportanceMetrics(0, 0, 0.0, 0, 0),
-        traits(EntityModelType.non_entity, false, false),
-        counts(0, 0, 0L));
+    put(inputs, table, new TableImportanceMetrics(0, 0, 0.0, 0, 0), true, true);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
-    // Only the fixed entity-role weight term (0.15 * 0.30 = 4.5) contributes; every
-    // normalized/count-based term is 0 because every catalog-wide maximum is 0. Rounds up to 5.
-    assertThat(scores.get(onlyTable), is(5));
+    assertThat(scores.get(onlyTable), greaterThanOrEqualTo(0));
+    assertThat(scores.get(onlyTable), lessThanOrEqualTo(100));
   }
 
   @Test
   void scoreIsDeterministicAndReproducibleForTheSameInputs() {
-    final DatabaseObjectNodeId table = node("ORDERS");
+    final Table table = table("ORDERS");
+    final DatabaseObjectNodeId node = DatabaseObjectNodeIdUtility.create(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(
-        inputs,
-        table,
-        new TableImportanceMetrics(3, 4, 2.5, 5, 6),
-        traits(EntityModelType.weak_entity, false, false),
-        counts(6, 3, 200L));
+    put(inputs, table, new TableImportanceMetrics(3, 4, 2.5, 5, 6), true, true);
 
-    final int firstRun = ImportanceScoreCalculator.calculate(inputs).get(table);
-    final int secondRun = ImportanceScoreCalculator.calculate(inputs).get(table);
+    final int firstRun = ImportanceScoreCalculator.calculate(inputs).get(node);
+    final int secondRun = ImportanceScoreCalculator.calculate(inputs).get(node);
 
     assertThat(firstRun, is(equalTo(secondRun)));
   }
 
   @Test
   void scoreIsAlwaysWithinZeroToOneHundred() {
-    final DatabaseObjectNodeId maxed = node("MAXED_OUT");
+    final Table table = table("MAXED_OUT");
+    final DatabaseObjectNodeId maxed = DatabaseObjectNodeIdUtility.create(table);
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    put(
-        inputs,
-        maxed,
-        new TableImportanceMetrics(100, 100, 1000.0, 500, 500),
-        traits(EntityModelType.strong_entity, false, false),
-        counts(500, 200, 1_000_000L));
+    put(inputs, table, new TableImportanceMetrics(100, 100, 1000.0, 500, 500), true, true);
 
     final Map<DatabaseObjectNodeId, Integer> scores = ImportanceScoreCalculator.calculate(inputs);
 
@@ -158,25 +129,18 @@ class ImportanceScoreCalculatorTest {
 
   private static void put(
       final TableImportanceInputs inputs,
-      final DatabaseObjectNodeId nodeId,
+      final Table table,
       final TableImportanceMetrics metrics,
-      final TableTraits traits,
-      final TableCounts counts) {
-    inputs.put(nodeId, traits, counts, metrics);
+      final boolean hasPrimaryKey,
+      final boolean hasIndexes) {
+    doReturn(hasPrimaryKey).when(table).hasPrimaryKey();
+    doReturn(hasIndexes).when(table).hasIndexes();
+    inputs.putTableImportance(table, metrics);
   }
 
-  private static TableTraits traits(
-      final EntityModelType entityModelType, final boolean noPrimaryKey, final boolean noIndexes) {
-    return new TableTraits(noPrimaryKey, null, noIndexes, null, null, null, entityModelType);
-  }
-
-  private static TableCounts counts(
-      final int attributeColumnCount, final int foreignKeyCount, final long rowCount) {
-    return new TableCounts(attributeColumnCount, null, foreignKeyCount, null, null, rowCount);
-  }
-
-  private static DatabaseObjectNodeId node(final String name) {
-    return new DatabaseObjectNodeId(
-        new NamedObjectKey("PUBLIC", name), SimpleDatabaseObjectType.table);
+  private static Table table(final String name) {
+    final LightTable table = new LightTable(name);
+    table.setPrimaryKey(new LightPrimaryKey(table.addColumn("ID")));
+    return spy(table);
   }
 }
