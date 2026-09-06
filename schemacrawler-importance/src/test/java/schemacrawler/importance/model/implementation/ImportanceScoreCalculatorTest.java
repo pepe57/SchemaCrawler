@@ -162,9 +162,7 @@ class ImportanceScoreCalculatorTest {
       final TableImportanceMetrics metrics,
       final TableTraits traits,
       final TableCounts counts) {
-    inputs.put(nodeId, metrics);
-    inputs.put(nodeId, traits);
-    inputs.put(nodeId, counts);
+    inputs.put(nodeId, traits, counts, metrics);
   }
 
   private static TableTraits traits(

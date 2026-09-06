@@ -28,7 +28,6 @@ import schemacrawler.importance.model.DatabaseObjectNodeId;
 import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
-import schemacrawler.schema.DatabaseObject;
 import schemacrawler.schema.Table;
 import us.fatehi.utility.UtilityMarker;
 
@@ -41,60 +40,56 @@ final class CommunityDetector {
   static List<TableCluster> detectCommunities(
       final Graph<DatabaseObjectNodeId, SchemaEdge> fullGraph,
       final Set<DatabaseObjectNodeId> tableNodes,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
+      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
     requireNonNull(fullGraph, "No full graph provided");
     requireNonNull(tableNodes, "No table and view nodes provided");
-    requireNonNull(nodeToObject, "No node-to-object map provided");
+    requireNonNull(tablesByNode, "No table-node map provided");
     if (tableNodes.isEmpty()) {
       return List.of();
     }
 
     final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph =
         tableSubgraph(fullGraph, tableNodes);
-    final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, nodeToObject);
-    return sortTableClusters(tableClusters, nodeToObject);
+    final List<TableCluster> tableClusters = createTableClusters(tableSubgraph, tablesByNode);
+    return sortTableClusters(tableClusters, tablesByNode);
+  }
+
+  private static TableCluster createTableCluster(
+      final Set<DatabaseObjectNodeId> cluster,
+      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+    // Sorting establishes both the anchor and deterministic member output.
+    final List<DatabaseObjectNodeId> sortedMembers = new ArrayList<>(cluster);
+    sortedMembers.sort(
+        Comparator.comparingInt(
+                (final DatabaseObjectNodeId nodeId) -> getImportanceScore(nodeId, tablesByNode))
+            .reversed()
+            .thenComparing(nodeId -> getTableFullName(nodeId, tablesByNode)));
+    final DatabaseObjectNodeId anchorNode = sortedMembers.get(0);
+    final String anchorFullName = getTableFullName(anchorNode, tablesByNode);
+    final UUID communityId =
+        UUID.nameUUIDFromBytes(("community:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
+    return new TableCluster(communityId, anchorNode, sortedMembers);
   }
 
   private static List<TableCluster> createTableClusters(
       final Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
+      final Map<DatabaseObjectNodeId, Table> tablesByNode) {
     final ClusteringAlgorithm.Clustering<DatabaseObjectNodeId> clustering =
         new LabelPropagationClustering<>(tableSubgraph, 100, new Random(0)).getClustering();
 
     final List<TableCluster> tableClusters = new ArrayList<>();
     for (final Set<DatabaseObjectNodeId> cluster : clustering.getClusters()) {
       if (cluster != null && cluster.size() >= MIN_CLUSTER_SIZE) {
-        tableClusters.add(createTableCluster(cluster, nodeToObject));
+        tableClusters.add(createTableCluster(cluster, tablesByNode));
       }
     }
     return tableClusters;
   }
 
-  private static TableCluster createTableCluster(
-      final Set<DatabaseObjectNodeId> cluster,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
-    // Sorting establishes both the anchor and deterministic member output.
-    final List<DatabaseObjectNodeId> sortedMembers =
-        cluster.stream()
-            .sorted(
-                Comparator.comparingInt(
-                        (final DatabaseObjectNodeId nodeId) ->
-                            getImportanceScore(nodeId, nodeToObject))
-                    .reversed()
-                    .thenComparing(nodeId -> getTableFullName(nodeId, nodeToObject)))
-            .toList();
-    final DatabaseObjectNodeId anchorNode = sortedMembers.get(0);
-    final String anchorFullName = getTableFullName(anchorNode, nodeToObject);
-    final UUID communityId =
-        UUID.nameUUIDFromBytes(("community:" + anchorFullName).getBytes(StandardCharsets.UTF_8));
-    return new TableCluster(communityId, anchorNode, sortedMembers);
-  }
-
   private static int getImportanceScore(
-      final DatabaseObjectNodeId nodeId,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
-    final DatabaseObject object = nodeToObject.get(nodeId);
-    if (object instanceof final Table table) {
+      final DatabaseObjectNodeId nodeId, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+    final Table table = tablesByNode.get(nodeId);
+    if (table != null) {
       final TableImportance importance = table.getAttribute(TableImportance.class.getName());
       if (importance != null) {
         return importance.importanceScore();
@@ -104,27 +99,25 @@ final class CommunityDetector {
   }
 
   private static String getTableFullName(
-      final DatabaseObjectNodeId nodeId,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
-    final DatabaseObject object = nodeToObject.get(nodeId);
-    if (object != null && object.getFullName() != null) {
-      return object.getFullName();
+      final DatabaseObjectNodeId nodeId, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+    final Table table = tablesByNode.get(nodeId);
+    if (table != null && table.getFullName() != null) {
+      return table.getFullName();
     }
     return nodeId.key().toString();
   }
 
   private static List<TableCluster> sortTableClusters(
-      final List<TableCluster> tableClusters,
-      final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject) {
-    return tableClusters.stream()
-        .sorted(
-            Comparator.comparingInt(
-                    (final TableCluster tableCluster) ->
-                        getImportanceScore(tableCluster.anchorNode(), nodeToObject))
-                .reversed()
-                .thenComparing(
-                    tableCluster -> getTableFullName(tableCluster.anchorNode(), nodeToObject)))
-        .toList();
+      final List<TableCluster> tableClusters, final Map<DatabaseObjectNodeId, Table> tablesByNode) {
+    final List<TableCluster> sortedTableClusters = new ArrayList<>(tableClusters);
+    sortedTableClusters.sort(
+        Comparator.comparingInt(
+                (final TableCluster tableCluster) ->
+                    getImportanceScore(tableCluster.anchorNode(), tablesByNode))
+            .reversed()
+            .thenComparing(
+                tableCluster -> getTableFullName(tableCluster.anchorNode(), tablesByNode)));
+    return List.copyOf(sortedTableClusters);
   }
 
   private static Graph<DatabaseObjectNodeId, SchemaEdge> tableSubgraph(

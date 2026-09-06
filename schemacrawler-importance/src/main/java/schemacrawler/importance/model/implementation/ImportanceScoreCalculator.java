@@ -100,11 +100,9 @@ final class ImportanceScoreCalculator {
     double maxForeignKeyCount = 0;
     double maxTriggerCount = 0;
 
-    for (final DatabaseObjectNodeId nodeId : inputs.keySet()) {
-      final TableImportanceInputs.TableImportanceInput entry = inputs.get(nodeId);
-      if (entry == null) {
-        continue;
-      }
+    for (final Map.Entry<DatabaseObjectNodeId, TableImportanceInputs.TableImportanceInput>
+        inputEntry : inputs.entries()) {
+      final TableImportanceInputs.TableImportanceInput entry = inputEntry.getValue();
       final TableImportanceMetrics nodeMetrics = entry.importanceMetrics();
       final TableCounts nodeCounts = entry.tableCounts();
 
@@ -136,11 +134,10 @@ final class ImportanceScoreCalculator {
     final MaxTableCounts maxTableCounts = maxValues.tableCounts();
 
     final Map<DatabaseObjectNodeId, Integer> scores = new LinkedHashMap<>();
-    for (final DatabaseObjectNodeId nodeId : inputs.keySet()) {
-      final TableImportanceInputs.TableImportanceInput entry = inputs.get(nodeId);
-      if (entry == null) {
-        continue;
-      }
+    for (final Map.Entry<DatabaseObjectNodeId, TableImportanceInputs.TableImportanceInput>
+        inputEntry : inputs.entries()) {
+      final DatabaseObjectNodeId nodeId = inputEntry.getKey();
+      final TableImportanceInputs.TableImportanceInput entry = inputEntry.getValue();
       final TableImportanceMetrics nodeMetrics = entry.importanceMetrics();
       final TableTraits nodeTraits = entry.tableTraits();
       final TableCounts nodeCounts = entry.tableCounts();

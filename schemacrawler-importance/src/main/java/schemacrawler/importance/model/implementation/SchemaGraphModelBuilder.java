@@ -10,25 +10,18 @@ package schemacrawler.importance.model.implementation;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DirectedPseudograph;
 import schemacrawler.importance.model.DatabaseObjectNodeId;
-import schemacrawler.importance.model.DatabaseObjectNodeIdUtility;
-import schemacrawler.importance.model.SchemaEdge;
 import schemacrawler.importance.model.SchemaGraphModel;
 import schemacrawler.importance.model.TableCluster;
 import schemacrawler.importance.model.TableImportance;
 import schemacrawler.importance.model.TableImportanceMetrics;
 import schemacrawler.schema.Catalog;
-import schemacrawler.schema.DatabaseObject;
+import schemacrawler.schema.Routine;
+import schemacrawler.schema.Synonym;
 import schemacrawler.schema.Table;
 import schemacrawler.tools.utility.TableImportanceUtility;
-import schemacrawler.utility.MetaDataUtility.SimpleDatabaseObjectType;
 import us.fatehi.utility.Builder;
 
 /** Builds the immutable dependency graph foundation from a SchemaCrawler catalog. */
@@ -39,49 +32,54 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
     return new SchemaGraphModelBuilder(catalog);
   }
 
-  private final Graph<DatabaseObjectNodeId, SchemaEdge> catalogGraph;
-  private final Map<DatabaseObjectNodeId, DatabaseObject> nodeToObject;
-  private final Set<DatabaseObjectNodeId> tableNodes;
+  private final SchemaGraphAssembly assembly;
 
   private SchemaGraphModelBuilder(final Catalog catalog) {
     requireNonNull(catalog, "No catalog provided");
 
-    catalogGraph = new DirectedPseudograph<>(SchemaEdge.class);
-    nodeToObject = new LinkedHashMap<>();
-    tableNodes = new LinkedHashSet<>();
+    assembly = new SchemaGraphAssembly();
 
+    // First add all nodes (vertices)
     for (final Table table : catalog.getTables()) {
-      addNode(table);
+      assembly.addNode(table);
     }
-    for (final schemacrawler.schema.Routine routine : catalog.getRoutines()) {
-      addNode(routine);
+    for (final Routine routine : catalog.getRoutines()) {
+      assembly.addNode(routine);
     }
-    for (final schemacrawler.schema.Synonym synonym : catalog.getSynonyms()) {
-      addNode(synonym);
+    for (final Synonym synonym : catalog.getSynonyms()) {
+      assembly.addNode(synonym);
     }
-    EdgeFactory.addEdges(
-        catalog.getTables(), catalog.getRoutines(), catalog.getSynonyms(), catalogGraph);
+
+    // Next add all edges
+    for (final Table table : catalog.getTables()) {
+      EdgeFactory.addTableEdges(assembly, table);
+    }
+    for (final Routine routine : catalog.getRoutines()) {
+      EdgeFactory.addRoutineEdges(assembly, routine);
+    }
+    for (final Synonym synonym : catalog.getSynonyms()) {
+      EdgeFactory.addSynonymEdges(assembly, synonym);
+    }
   }
 
   @Override
   public SchemaGraphModel build() {
-    if (catalogGraph == null) {
+    if (assembly.catalogGraph() == null) {
       throw new IllegalStateException(
           "Build nodes and edges before building the schema graph model");
     }
     final Map<DatabaseObjectNodeId, TableImportanceMetrics> topologyMetrics =
-        GraphMetricsCalculator.calculate(catalogGraph);
+        GraphMetricsCalculator.calculate(assembly.catalogGraph());
 
     final TableImportanceInputs inputs = new TableImportanceInputs();
-    for (final Map.Entry<DatabaseObjectNodeId, TableImportanceMetrics> entry :
-        topologyMetrics.entrySet()) {
-      inputs.put(entry.getKey(), entry.getValue());
-    }
-    for (final Map.Entry<DatabaseObjectNodeId, DatabaseObject> entry : nodeToObject.entrySet()) {
-      if (entry.getValue() instanceof final Table table) {
-        inputs.put(entry.getKey(), TableImportanceUtility.tableTraitsfrom(table));
-        inputs.put(entry.getKey(), TableImportanceUtility.tableCountsfrom(table));
-      }
+    for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
+      final DatabaseObjectNodeId nodeId = entry.getKey();
+      final Table table = entry.getValue();
+      inputs.put(
+          nodeId,
+          TableImportanceUtility.tableTraitsfrom(table),
+          TableImportanceUtility.tableCountsfrom(table),
+          topologyMetrics.get(nodeId));
     }
 
     final Map<DatabaseObjectNodeId, Integer> importanceScores =
@@ -89,35 +87,26 @@ public final class SchemaGraphModelBuilder implements Builder<SchemaGraphModel> 
 
     storeTableImportance(inputs, importanceScores);
     final List<TableCluster> tableClusters =
-        CommunityDetector.detectCommunities(catalogGraph, tableNodes, nodeToObject);
-    return new ImmutableSchemaGraphModel(catalogGraph, tableNodes, nodeToObject, tableClusters);
-  }
-
-  private void addNode(final DatabaseObject databaseObject) {
-    final DatabaseObjectNodeId nodeId = DatabaseObjectNodeIdUtility.create(databaseObject);
-    catalogGraph.addVertex(nodeId);
-    nodeToObject.put(nodeId, databaseObject);
-    if (nodeId.type() == SimpleDatabaseObjectType.table
-        || nodeId.type() == SimpleDatabaseObjectType.view) {
-      tableNodes.add(nodeId);
-    }
+        CommunityDetector.detectCommunities(
+            assembly.catalogGraph(), assembly.tableNodes(), assembly.tablesByNode());
+    return new ImmutableSchemaGraphModel(
+        assembly.catalogGraph(), assembly.tableNodes(), assembly.nodeToObject(), tableClusters);
   }
 
   private void storeTableImportance(
       final TableImportanceInputs inputs,
       final Map<DatabaseObjectNodeId, Integer> importanceScores) {
-    for (final Map.Entry<DatabaseObjectNodeId, DatabaseObject> entry : nodeToObject.entrySet()) {
+    for (final Map.Entry<DatabaseObjectNodeId, Table> entry : assembly.tablesByNode().entrySet()) {
       final DatabaseObjectNodeId nodeId = entry.getKey();
-      if (entry.getValue() instanceof final Table table) {
-        final TableImportanceInputs.TableImportanceInput tableInputs = inputs.get(nodeId);
-        table.setAttribute(
-            TableImportance.class.getName(),
-            new TableImportance(
-                importanceScores.get(nodeId),
-                tableInputs.importanceMetrics(),
-                tableInputs.tableTraits(),
-                tableInputs.tableCounts()));
-      }
+      final Table table = entry.getValue();
+      final TableImportanceInputs.TableImportanceInput tableInputs = inputs.get(nodeId);
+      table.setAttribute(
+          TableImportance.class.getName(),
+          new TableImportance(
+              importanceScores.get(nodeId),
+              tableInputs.importanceMetrics(),
+              tableInputs.tableTraits(),
+              tableInputs.tableCounts()));
     }
   }
 }
